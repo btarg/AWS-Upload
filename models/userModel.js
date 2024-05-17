@@ -1,13 +1,17 @@
 const pool = require('../config/database');
+require("dotenv").config();
 
 // Create the users table if it doesn't exist
 const createUserTable = async () => {
+    const defaultBytesAllowed = await getBytesAllowed(false);
+
     const query = `
     CREATE TABLE IF NOT EXISTS users (
       id VARCHAR(255) PRIMARY KEY,
-      isPremium BOOLEAN NOT NULL,
+      isPremium BOOLEAN NOT NULL DEFAULT false,
       premiumExpiry TIMESTAMP,
-      bytesUsed BIGINT DEFAULT 0
+      bytesUsed BIGINT DEFAULT 0,
+      bytesAllowed BIGINT DEFAULT ${defaultBytesAllowed}
     );
   `;
     await pool.query(query);
@@ -23,10 +27,12 @@ const getUserById = async (userId) => {
         if (user.premiumexpiry && !isNaN(new Date(user.premiumexpiry))) {
             isPremium = user.ispremium && new Date(user.premiumexpiry) > new Date();
         }
-        return { id: user.id, isPremium, premiumExpiry: user.premiumexpiry, bytesUsed: user.bytesused };
+        const bytesAllowed = getBytesAllowed(isPremium);
+
+        return { id: user.id, isPremium, premiumExpiry: user.premiumexpiry, bytesUsed: user.bytesused, bytesAllowed: bytesAllowed };
     }
     // empty user
-    return { isPremium: false, premiumExpiry: null, bytesUsed: 0 };
+    return { isPremium: false, premiumExpiry: null, bytesUsed: 0, bytesAllowed: getBytesAllowed(false) };
 };
 
 const getAllUsers = async () => {
@@ -38,13 +44,23 @@ const getAllUsers = async () => {
     return rows;
 }
 
+const getBytesAllowed = async (premium) => {
+    if (premium) {
+        return (process.env.MB_ALLOWED_PREMIUM || 25000) * 1024 * 1024; // 100mb
+    } else {
+        return (process.env.MB_ALLOWED || 10000) * 1024 * 1024
+    }
+};
+
 // Insert or update a user
 const upsertUserData = async (id, isPremium, premiumExpiry, bytesUsed) => {
+    const bytesAllowed = getBytesAllowed(isPremium);
     const user = {
         id,
         isPremium,
         premiumExpiry,
-        bytesUsed
+        bytesUsed,
+        bytesAllowed
     };
     await upsertUser(user);
 };

@@ -2,15 +2,15 @@ const path = require('path');
 
 const express = require('express');
 const session = require('express-session');
-
-
 const http = require('http');
-const socketIo = require('socket.io');
-
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
 
+// Make sure the socket.io socket is set up
+const { initializeSocket } = require('./config/socket');
+(async () => {
+    await initializeSocket(server);
+})();
 
 const dotenv = require('dotenv');
 const { router: authRoutes } = require('./routes/auth');
@@ -40,7 +40,7 @@ app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
 
 
 app.use('/auth', authRoutes);
-app.use('/putfile', uploadRoutes(io));
+app.use('/putfile', uploadRoutes);
 app.use('/download', downloadRoutes);
 app.use('/list', listRoutes);
 app.use('/discord', discordRoutes);

@@ -50,7 +50,7 @@ router.get('/guilds', (req, res) => {
 });
 
 router.get('/user', (req, res) => {
-    if (!req.session || !req.cookies.accessToken) {
+    if (!req.cookies.accessToken) {
         console.error('/user: Not authenticated');
         return res.status(401).json({ error: 'Not authenticated' });
     }

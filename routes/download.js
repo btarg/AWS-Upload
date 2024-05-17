@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const s3 = require('../config/s3');
 require('dotenv').config();
 const pool = require('../config/database');
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { createReadStream } = require('stream');
+
+const s3Client = new S3Client({ region: process.env.S3_REGION });
 
 router.get('/:id', async (req, res) => {
     const fileId = req.params.id;
@@ -25,18 +28,12 @@ router.get('/:id', async (req, res) => {
     };
 
     try {
-        const s3Stream = s3.getObject(params).createReadStream();
+        const command = new GetObjectCommand(params);
+        const response = await s3Client.send(command);
 
         res.setHeader('Content-Disposition', 'attachment; filename=' + file.filename);
 
-        s3Stream.on('error', function (err) {
-            console.error('Error downloading file', err);
-            if (!res.headersSent) {
-                return res.status(500).send('Error downloading file');
-            }
-        });
-
-        s3Stream.pipe(res);
+        response.Body.pipe(res); // Pipe the S3 object data directly to the response
     } catch (error) {
         console.error('Error downloading file', error);
         if (!res.headersSent) {

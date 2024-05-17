@@ -55,6 +55,9 @@ router.get('/:id', (req, res) => {
     res.redirect(`/?guild=${data.guildId}&channel=${data.channelId}&isDM=${data.isDM}`);
 });
 
+function isLinkValid(id) {
+    return linkMap.has(id);
+}
 function getDataFromLinkMap(id) {
     return linkMap.get(id);
 }
@@ -64,4 +67,4 @@ function invalidateLink(id) {
 }
 
 // export router
-module.exports = { router, createUploadLink, invalidateLink, getDataFromLinkMap, generateId };
+module.exports = { router, createUploadLink, invalidateLink, getDataFromLinkMap, isLinkValid, generateId };

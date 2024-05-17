@@ -3,7 +3,9 @@
     <input type="file" @change="handleFileUpload" />
     <button
       @click="uploadFile"
-      :disabled="!selectedFile || uploadProgress > 0 || !authStore.loggedIn"
+      :disabled="
+        !selectedFile || uploadProgress.value > 0 || !authStore.loggedIn
+      "
     >
       Upload
     </button>
@@ -25,6 +27,7 @@ export default defineComponent({
   setup() {
     const authStore = useAuthStore();
     const selectedFile = ref(null);
+    const fileHash = ref(null);
     const uploadProgress = ref(0);
     const config = ref(null);
 
@@ -47,6 +50,21 @@ export default defineComponent({
 
     async function handleFileUpload(event) {
       selectedFile.value = event.target.files[0];
+      // Calculate the file hash
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const arrayBuffer = event.target.result;
+        const hashBuffer = await window.crypto.subtle.digest(
+          "SHA-1",
+          arrayBuffer
+        );
+        const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
+        fileHash.value = hashArray
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join(""); // convert bytes to hex string
+        console.log("HASH: " + fileHash.value);
+      };
+      reader.readAsArrayBuffer(selectedFile.value);
     }
 
     async function uploadFile() {
@@ -58,33 +76,38 @@ export default defineComponent({
         return;
 
       const fileSizeInMB = selectedFile.value.size / (1024 * 1024);
-      if (fileSizeInMB > config.maxFileSize) {
-        alert(`File size exceeds the limit of ${config.maxFileSize}MB`);
+      if (fileSizeInMB > config.value.maxFileSize) {
+        alert(`File size exceeds the limit of ${config.value.maxFileSize}MB`);
         return;
       }
 
+      // only append the file to the form
       const urlParams = new URLSearchParams(window.location.search);
       const formData = new FormData();
       formData.append("file", selectedFile.value);
-      formData.append("guildId", this.selectedGuildId);
-      formData.append("channelId", urlParams.get("channel"));
-      formData.append("userId", authStore.user.id);
-      formData.append("isDM", urlParams.get("isDM") || false);
-
+      // the headers store details about the file upload so we don't have to parse them from a form
+      // this was a nightmare
       const response = await fetch("/putfile", {
         method: "POST",
         body: formData,
+        headers: {
+          fileHash: fileHash.value,
+          guildId: this.selectedGuildId,
+          channelId: urlParams.get("channel"),
+          userId: authStore.user.id,
+          isDM: urlParams.get("isDM") || "false",
+        },
       });
       const result = await response.json();
 
-      if (response.status === 200 || response.status === 201) {
+      if (!result.error) {
         uploadProgress.value = 0;
 
         const downloadLink = result.downloadLink;
         alert(`File uploaded successfully. Download link: ${downloadLink}`);
       } else {
         // alert the error
-        alert(result.error);
+        alert(result.error.message);
       }
     }
 

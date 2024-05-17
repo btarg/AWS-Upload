@@ -38,7 +38,7 @@ authStore.updateLogin();
     :selectedGuildId="selectedGuildId"
   />
   <label v-if="selectedGuildId && authStore.loggedIn"
-    >Selected guild: {{ selectedGuildId }}</label
+    >Server: {{ selectedGuildId }}</label
   >
 </template>
 
