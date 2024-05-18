@@ -4,7 +4,6 @@ const { S3Client, S3 } = require("@aws-sdk/client-s3");
 const Transform = require('stream').Transform;
 
 const fileService = require('../services/fileService');
-const userService = require('../services/userService');
 const userModel = require('../models/userModel');
 const fileModel = require('../models/fileModel');
 
@@ -16,10 +15,7 @@ require("dotenv").config();
 const { getIo } = require('../config/socket');
 const io = getIo();
 
-const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-const region = process.env.S3_REGION;
-const Bucket = process.env.S3_BUCKET_NAME;
+const { accessKeyId, secretAccessKey, region, Bucket } = require('../config/aws');
 
 const parseAndUpload = async (req) => {
     return new Promise(async (resolve, reject) => {
@@ -30,7 +26,7 @@ const parseAndUpload = async (req) => {
         }
 
         const fileHash = req.headers['filehash'];
-        console.log("File hash from header: " + fileHash);
+        const fileSize = req.headers['filesize'];
         const guildId = req.headers['guildid'];
         const channelId = req.headers['channelid'];
         const userId = req.headers['userid'];
@@ -50,7 +46,7 @@ const parseAndUpload = async (req) => {
 
         let user;
         try {
-            user = await userService.getUser(userId);
+            user = await userModel.getUserById(userId);
             if (!user) {
                 console.log("User not found");
                 reject({ error: 'User not found', statusCode: 404 });
@@ -63,7 +59,7 @@ const parseAndUpload = async (req) => {
         }
 
         // this will be set later
-        let originalFilename, fileSize;
+        let originalFilename;
 
         // method accepts the request and a callback.
         form.parse(req, (err, fields, files) => {
@@ -93,29 +89,33 @@ const parseAndUpload = async (req) => {
 
         form.on('fileBegin', (formName, file) => {
             originalFilename = file.originalFilename;
-            fileSize = file.size;
 
+            console.log("FILE SIZE IS " + fileSize);
             console.log(`S3 KEY IS ${guildId}/${userId}/${originalFilename}`);
 
 
+
             // Check if a file with the same hash already exists in this guild
-            // We don't check other guilds, since those files would have the wrong key structure
-            // and we want everyone's files to remain separate
-            const existingFile = fileService.getFileByHash(fileHash, guildId);
-            if (existingFile) {
-                // If the file already exists, return the original copy
-                const downloadLink = `${hostname}/download/${existingFile.fileid}`; // remember, no capitals here!
-                console.log("Existing download link: " + downloadLink);
-                fileService.emitFileUploaded(channelId, userId, isDM, existingFile.filename, downloadLink);
-                resolve({ message: 'File already exists', downloadLink: downloadLink });
-            }
-            console.log("before byte check");
+            fileService.getFileByHash(fileHash, guildId)
+                .then(existingFile => {
+                    console.log("Existing file: " + existingFile);
+                    if (existingFile) {
+                        // If the file already exists, return the original copy
+                        const downloadLink = `${hostname}/download/${existingFile.fileid}`; // remember, no capitals here!
+                        console.log("Existing download link: " + downloadLink);
+                        fileService.emitFileUploaded(channelId, userId, isDM, existingFile.filename, downloadLink);
+                        resolve({ message: 'File already exists', downloadLink: downloadLink });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error getting file by hash:', error);
+                    reject(error);
+                });
 
             if ((user.bytesUsed + fileSize) >= user.bytesAllowed) {
                 console.log("User exceeded storage limit");
                 reject({ error: 'User has exceeded their storage limit', statusCode: 403 });
             }
-            console.log("after byte check");
 
             file.open = async function () {
                 console.log("file.open");
@@ -150,8 +150,6 @@ const parseAndUpload = async (req) => {
                 }).done()
                     .then(data => {
                         form.emit('data', { name: "complete", value: data });
-
-                        console.log("Upload complete!");
 
                         // add bytes to user
                         userModel.addBytes(userId, fileSize);

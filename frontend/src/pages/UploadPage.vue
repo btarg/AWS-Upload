@@ -1,26 +1,3 @@
-<script setup>
-import { useAuthStore } from "../stores/authStore.js";
-import GuildDropdown from "../components/GuildDropdown.vue";
-import Uploader from "../components/Uploader.vue";
-const authStore = useAuthStore();
-authStore.updateLogin();
-</script>
-
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
-
 <template>
   <button v-if="!authStore.loggedIn" @click="authStore.logIn()">Login</button>
   <button v-else @click="authStore.logOut()">Logout</button>
@@ -37,10 +14,45 @@ authStore.updateLogin();
     v-if="selectedGuildId && authStore.loggedIn"
     :selectedGuildId="selectedGuildId"
   />
-  <label v-if="selectedGuildId && authStore.loggedIn"
-    >Server: {{ selectedGuildId }}</label
-  >
+  <label v-if="selectedGuildId && authStore.loggedIn">
+    Used:
+    {{ bytesUsed }} /
+    {{ bytesAllowed }}
+  </label>
 </template>
+
+<script setup>
+import { ref, onMounted } from "vue";
+import { useAuthStore } from "../stores/authStore.js";
+import GuildDropdown from "../components/GuildDropdown.vue";
+import Uploader from "../components/Uploader.vue";
+import { prettyPrintBytes } from "../utils.js";
+
+const authStore = useAuthStore();
+const bytesUsed = ref("");
+const bytesAllowed = ref("");
+
+import { onBeforeUnmount } from "vue";
+
+let intervalId;
+
+onMounted(async () => {
+  updateUserData();
+  intervalId = setInterval(updateUserData, 30000); // Refresh every 30 seconds
+});
+
+onBeforeUnmount(() => {
+  clearInterval(intervalId); // Clear the interval when the component is unmounted
+});
+
+function updateUserData() {
+  authStore.updateLogin();
+  if (authStore.user) {
+    bytesUsed.value = prettyPrintBytes(authStore.user.bytesUsed);
+    bytesAllowed.value = prettyPrintBytes(authStore.user.bytesAllowed);
+  }
+}
+</script>
 
 <script>
 export default {
@@ -61,3 +73,18 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.vue:hover {
+  filter: drop-shadow(0 0 2em #42b883aa);
+}
+</style>

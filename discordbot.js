@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const { createUploadLink } = require('./routes/linkgenerator');
 const { eventEmitter, searchFile } = require('./services/fileService');
+const { getFullHostname } = require('./utils/hostname');
 
 client.login(process.env.DISCORD_BOT_TOKEN);
 
@@ -68,10 +69,14 @@ client.on('interactionCreate', async (interaction) => {
             });
     } else if (commandName === 'searchfile') {
         const filename = interaction.options.getString('filename');
+        console.log("Searching for file: " + filename);
         searchFile(interaction.guild.id, interaction.user.id, filename)
             .then((file) => {
+                console.log(file[0]);
                 // Reply with the file details or a message saying the file was found
-                interaction.reply({ content: `File found: ${file[0].id}`, ephemeral: true });
+                const hostname = getFullHostname(process.env.HOSTNAME || "localhost");
+                const downloadLink = `${hostname}/download/${file[0].fileid}`;
+                interaction.reply({ content: `File found: ${downloadLink}`, ephemeral: true });
             })
             .catch((error) => {
                 console.error('Error searching for file:', error);
@@ -84,7 +89,7 @@ client.on('interactionCreate', async (interaction) => {
 
 eventEmitter.on('fileUploaded', (eventData) => {
     const { channelId, userId, isDM, fileName, downloadLink } = eventData;
-
+    console.log(`File uploaded: ${fileName} - ${downloadLink}`);
     if (isDM === true) {
         console.log("Sending DM message");
         // if this is a DM, the channel ID acts as the recipient

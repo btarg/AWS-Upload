@@ -92,6 +92,7 @@ export default defineComponent({
         body: formData,
         headers: {
           fileHash: fileHash.value,
+          fileSize: selectedFile.value.size,
           guildId: this.selectedGuildId,
           channelId: urlParams.get("channel"),
           userId: authStore.user.id,
@@ -109,6 +110,10 @@ export default defineComponent({
         // alert the error
         alert(result.error.message);
       }
+
+      // update the login cookies once we have finished, as we probably have added bytes
+      authStore.updateLogin();
+
     }
 
     return {

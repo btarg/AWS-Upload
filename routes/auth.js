@@ -1,6 +1,5 @@
 const express = require('express');
 const oauth = require('../config/oauth2');
-const userService = require('../services/userService');
 const userModel = require('../models/userModel');
 
 const router = express.Router();
@@ -14,16 +13,8 @@ const discordScope = ["identify", "guilds", "email"];
 // Middleware to check if the user is authenticated
 const checkAuthenticated = async (req, res, next) => {
     const discordUser = req.cookies.discordUser;
-    // console.log("Discord user:" + discordUser.id);
-    if (discordUser) {
-        try {
-            const dbUser = await userService.getUser(discordUser.id);
-            res.cookie('user', dbUser); // update the user cookie with the database user
-            next(); // Proceed to the route handler
-        } catch (error) {
-            console.error('Error fetching user data', error);
-            res.status(500).send('Error fetching user data');
-        }
+    if (discordUser && discordUser.id) {
+        next();
     } else {
         res.status(401).send('Not authenticated'); // Respond with an error
     }
@@ -31,9 +22,6 @@ const checkAuthenticated = async (req, res, next) => {
 
 router.get('/logout', (req, res) => {
 
-    if (req.session) {
-        req.session.user = null;
-    }
     // remove cookie
     res.clearCookie('user');
     res.clearCookie('discordUser')
@@ -117,6 +105,11 @@ router.get('/callback', async (req, res) => {
             redirectUri: `${req.protocol}://${req.get('host')}/auth/callback`
         });
         const oauthDiscordUser = await oauth.getUser(token.access_token);
+        // if user is not verified then throw an error and stop trying to log in.
+        // go back to the homepage
+        if (!oauthDiscordUser.verified) {
+            throw new Error("User is not verified");
+        }
         req.session.accessToken = token.access_token;
 
         res.cookie('refreshToken', token.refresh_token);
@@ -137,8 +130,16 @@ router.get('/callback', async (req, res) => {
     }
 });
 
-router.get('/user', checkAuthenticated, (req, res) => {
-    res.json(req.cookies.user);
+router.get('/user', checkAuthenticated, async (req, res) => {
+    try {
+        const discordUser = req.cookies.discordUser;
+        const dbUser = await userModel.getUserById(discordUser.id);
+        res.cookie('user', dbUser); // update the user cookie with the database user
+        res.json(dbUser);
+    } catch (error) {
+        console.error('Error fetching user data', error);
+        res.status(500).send('Error fetching user data');
+    }
 });
 router.get('/discordUser', checkAuthenticated, (req, res) => {
     res.json(req.cookies.discordUser);

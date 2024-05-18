@@ -25,7 +25,8 @@ export const useAuthStore = defineStore('auth', {
             fetch("/auth/logout")
                 .then((response) => {
                     if (!response.ok) {
-                        throw new Error("Error logging out");
+                        this.resetUser();
+                        throw new Error(response.statusText);
                     }
                 }).then(() => {
                     this.resetUser();
@@ -34,31 +35,22 @@ export const useAuthStore = defineStore('auth', {
         },
 
         updateLogin() {
+            this.loggedIn = false;
+
             // Check if the user's authentication status is already stored in the cookies
             const userCookie = document.cookie.split('; ').find(row => row.startsWith('user=j:'));
             const discordUserCookie = document.cookie.split('; ').find(row => row.startsWith('discordUser=j:'));
 
-            // log these
             console.log('Stored user:', userCookie);
             console.log('Stored discordUser:', discordUserCookie);
 
-            if (userCookie && discordUserCookie) {
-                this.user = JSON.parse(decodeURIComponent(userCookie.split('=')[1].substring(2)));
-                this.discordUser = JSON.parse(decodeURIComponent(discordUserCookie.split('=')[1].substring(2)));
-
-                if (this.user && this.discordUser) {
-                    this.loggedIn = true;
-                    return;
-                }
-            }
-
-            // otherwise we start fetching the user data which we can then store in cookies
-            console.log("Fetching user data");
+            // Fetch the DB user data
+            console.log("Fetching DB user data");
             fetch("/auth/user")
                 .then((response) => {
                     if (!response.ok) {
                         this.resetUser();
-                        throw new Error("Not logged in");
+                        throw new Error(response.statusText);
                     }
                     console.log('Auth User Response:', response);
                     return response.json();
@@ -68,32 +60,40 @@ export const useAuthStore = defineStore('auth', {
                         console.log(dbUserData);
                         this.user = dbUserData;
                         this.loggedIn = true;
-                        // DB User
-                        document.cookie = `user=j:${encodeURIComponent(JSON.stringify(dbUserData))}`;
-
-                        fetch("/discord/user")
-                            .then((response) => response.json())
-                            .then((discordUserData) => {
-                                this.discordUser = discordUserData;
-                                document.cookie = `discordUser=j:${encodeURIComponent(JSON.stringify(discordUserData))}`;
-                            })
-                            .catch((error) => {
-                                console.error("Error:", error);
-                                this.resetUser();
-                            });
-
                     } else {
                         console.log("No user data returned from /auth/user");
                         this.resetUser();
                     }
-
-
                 })
                 .catch((error) => {
                     if (error.message === "Not authenticated") {
                         this.resetUser();
                     }
                 });
+
+            if (discordUserCookie) {
+                this.discordUser = JSON.parse(decodeURIComponent(discordUserCookie.split('=')[1].substring(2)));
+                if (this.discordUser.id) {
+                    this.loggedIn = true;
+                } else {
+                    this.discordUser.null
+                    throw new Error("Invalid Discord User Cookie!");
+                }
+
+            } else {
+                // Fetch the Discord user data
+                console.log("Fetching Discord user data");
+                fetch("/discord/user")
+                    .then((response) => response.json())
+                    .then((discordUserData) => {
+                        this.discordUser = discordUserData;
+                        document.cookie = `discordUser=j:${encodeURIComponent(JSON.stringify(discordUserData))}`;
+                    })
+                    .catch((error) => {
+                        console.error("Error:", error);
+                        this.resetUser();
+                    });
+            }
         },
 
         resetUser() {

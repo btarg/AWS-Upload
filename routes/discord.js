@@ -2,13 +2,14 @@ const express = require('express');
 const router = express.Router();
 const https = require('https');
 const { client } = require('../discordbot');
+const { checkAuthenticated } = require("./auth");
 
 const cookieParser = require('cookie-parser');
 
 router.use(cookieParser());
 
 router.get('/guilds', (req, res) => {
-    if (!req.session || !req.cookies.accessToken) {
+    if (!req.session || !req.session.accessToken) {
         console.error('/guilds: Not authenticated');
         return res.status(401).json({ error: 'Not authenticated' });
     }
@@ -17,7 +18,7 @@ router.get('/guilds', (req, res) => {
         path: '/api/users/@me/guilds',
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + req.cookies.accessToken
+            'Authorization': 'Bearer ' + req.session.accessToken
         }
     };
 
@@ -49,18 +50,13 @@ router.get('/guilds', (req, res) => {
     request.end();
 });
 
-router.get('/user', (req, res) => {
-    if (!req.cookies.accessToken) {
-        console.error('/user: Not authenticated');
-        return res.status(401).json({ error: 'Not authenticated' });
-    }
-
+router.get('/user', checkAuthenticated, (req, res) => {
     const options = {
         hostname: 'discord.com',
         path: '/api/users/@me',
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + req.cookies.accessToken
+            'Authorization': 'Bearer ' + req.session.accessToken
         }
     };
 

@@ -11,19 +11,17 @@ const pool = require('../config/database');
 const eventEmitter = new events.EventEmitter();
 
 const getFileByHash = (fileHash, guildId) => {
-    let result = null;
-    try {
+    return new Promise((resolve, reject) => {
         pool.query('SELECT * FROM files WHERE guildId = $1 AND fileHash = $2', [guildId, fileHash], (error, results) => {
             if (error) {
-                throw error;
+                reject(error);
             } else if (results.rows.length > 0) {
-                result = results.rows[0];
+                resolve(results.rows[0]);
+            } else {
+                resolve(null);
             }
         });
-    } catch (error) {
-        throw error;
-    }
-    return result;
+    });
 };
 const getFileById = (fileId) => {
     return new Promise((resolve, reject) => {
@@ -56,7 +54,7 @@ function emitFileUploaded(channelId, userId, isDM, fileName, downloadLink) {
 function searchFile(guildId, userId, filename) {
     return new Promise(async (resolve, reject) => {
         // Use the LIKE operator with a wildcard to search for partial names
-        await pool.query('SELECT * FROM files WHERE guildId = $1 AND userId = $2 AND filename LIKE $3', [guildId, userId, '%' + filename + '%'], (error, results) => {
+        pool.query('SELECT * FROM files WHERE guildId = $1 AND userId = $2 AND filename LIKE $3', [guildId, userId, '%' + filename + '%'], (error, results) => {
             if (error) {
                 reject(error);
             } else if (results.rows.length > 0) {

@@ -27,12 +27,13 @@ const getUserById = async (userId) => {
         if (user.premiumexpiry && !isNaN(new Date(user.premiumexpiry))) {
             isPremium = user.ispremium && new Date(user.premiumexpiry) > new Date();
         }
-        const bytesAllowed = getBytesAllowed(isPremium);
+        const bytesAllowed = await getBytesAllowed(isPremium);
 
         return { id: user.id, isPremium, premiumExpiry: user.premiumexpiry, bytesUsed: user.bytesused, bytesAllowed: bytesAllowed };
     }
-    // empty user
-    return { isPremium: false, premiumExpiry: null, bytesUsed: 0, bytesAllowed: getBytesAllowed(false) };
+    // empty user with undefined id
+    const bytesAllowed = await getBytesAllowed(false);
+    return { isPremium: false, premiumExpiry: null, bytesUsed: 0, bytesAllowed: bytesAllowed };
 };
 
 const getAllUsers = async () => {
@@ -78,14 +79,18 @@ const upsertUser = async (user) => {
     await pool.query(query, [user.id, user.isPremium, user.premiumExpiry, user.bytesUsed]);
 };
 
-// Add bytes to a user
 const addBytes = async (userId, bytes) => {
     const query = `
     UPDATE users
     SET bytesUsed = bytesUsed + $2
     WHERE id = $1
   `;
-    await pool.query(query, [userId, bytes]);
+    try {
+        const result = await pool.query(query, [userId, bytes]);
+        console.log(result.rowCount); // This will log the number of rows updated
+    } catch (error) {
+        console.error('Error updating bytesUsed:', error);
+    }
 };
 
 // Remove bytes from a user
