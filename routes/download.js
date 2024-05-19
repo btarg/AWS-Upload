@@ -4,10 +4,19 @@ require('dotenv').config();
 const pool = require('../config/database');
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const rateLimit = require("express-rate-limit");
 
 const s3Client = new S3Client({ region: process.env.S3_REGION });
 
-router.get('/:id', async (req, res) => {
+// Enable rate limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 15, // limit each IP to 1 download per minute
+    message: "Too many requests, please try again later."
+});
+
+
+router.get('/:id', limiter, async (req, res) => {
     const fileId = req.params.id;
 
     const result = await pool.query('SELECT * FROM files WHERE fileId = $1', [fileId]);

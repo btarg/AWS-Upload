@@ -20,6 +20,7 @@
     "dotenv": "^16.4.5",
     "events": "^3.3.0",
     "express": "^4.19.2",
+    "express-rate-limit": "^7.2.0",
     "express-session": "^1.18.0",
     "formidable": "^2.1.1",
     "pg": "^8.11.5",

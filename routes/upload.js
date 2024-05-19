@@ -12,8 +12,15 @@ require('dotenv').config();
 const router = express.Router();
 router.use(cookieParser());
 
+const rateLimit = require("express-rate-limit");
 
-router.post('/', checkAuthenticated, async (req, res) => {
+const uploadLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // limit each IP to 5 uploads every 15 minutes
+    message: "Too many upload attempts from this IP, please try again after 15 minutes."
+});
+
+router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
     // these are the same headers that will be passed to the parser
     const fileHash = req.headers['filehash'];
     const fileSize = Number(req.headers['filesize']);

@@ -8,7 +8,7 @@ const cookieParser = require('cookie-parser');
 
 router.use(cookieParser());
 
-router.get('/guilds', (req, res) => {
+router.get('/guilds', checkAuthenticated, (req, res) => {
     if (!req.session || !req.session.accessToken) {
         console.error('/guilds: Not authenticated');
         return res.status(401).json({ error: 'Not authenticated' });
