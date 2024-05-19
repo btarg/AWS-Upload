@@ -97,8 +97,9 @@ const parseAndUpload = async (req, user) => {
                     }),
                     params: {
                         Bucket,
-                        Key: `${guildId}/${userId}/${originalFilename}`,
-                        Body: this._writeStream
+                        Key: `${guildId}/${userId}/${fileId}`,
+                        Body: this._writeStream,
+                        ContentDisposition: `attachment; filename="${originalFilename}"`
                     },
                     tags: [], // optional tags
                     queueSize: 4, // optional concurrency configuration

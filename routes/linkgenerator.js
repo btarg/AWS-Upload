@@ -9,9 +9,9 @@ const { checkAuthenticated } = require('./auth');
 // In-memory map to store associations
 const linkMap = new Map();
 
-// Function to generate a unique ID 16 characters url safe
+// Function to generate a unique ID 11 characters url safe
 function generateId() {
-    return crypto.randomBytes(12).toString('base64')
+    return crypto.randomBytes(8).toString('base64')
         .replace(/\+/g, '-').replace(/\//g, '_');
 }
 

@@ -15,7 +15,6 @@ const limiter = rateLimit({
     message: "Too many requests, please try again later."
 });
 
-
 router.get('/:id', limiter, async (req, res) => {
     const fileId = req.params.id;
 
@@ -27,20 +26,38 @@ router.get('/:id', limiter, async (req, res) => {
         return res.status(404).send('File not found');
     }
 
-    const key = `${file.guildid}/${file.userid}/${file.filename}`;
-    console.log('Downloading file:', key);
+    const s3key = `${file.guildid}/${file.userid}/${file.fileid}`;
+    console.log('Downloading file:', s3key);
 
     const params = {
         Bucket: process.env.S3_BUCKET_NAME,
-        Key: key
+        Key: s3key
     };
 
     try {
         const command = new GetObjectCommand(params);
-        // Expires in 15 mins, even if the url expires during download it will continue downloading
         const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 600 });
         console.log("Signed S3 URL: " + signedUrl);
-        res.redirect(signedUrl);
+
+        // Generate the HTML
+        const html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${file.filename}</title>
+                <meta property="og:title" content="${file.filename}" />
+                <meta property="og:description" content="Click to download" />
+                <meta property="og:image" content="https://example.com/thumbnail.jpg" />
+                <meta property="og:url" content="${signedUrl}" />
+                <meta http-equiv="refresh" content="1;url=${signedUrl}" />
+            </head>
+            <body>
+            </body>
+            </html>
+        `;
+
+        // Send the HTML
+        res.send(html);
     } catch (error) {
         console.error('Error generating signed URL', error);
         if (!res.headersSent) {

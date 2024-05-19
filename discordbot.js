@@ -89,7 +89,7 @@ client.on('interactionCreate', async (interaction) => {
 eventEmitter.on('fileUploaded', (eventData) => {
     const { channelId, userId, isDM, fileName, downloadLink } = eventData;
     console.log(`Upload success event: ${fileName} - ${downloadLink}`);
-    if (isDM) {
+    if (isDM == true) {
         console.log("Sending DM message");
         // if this is a DM, the channel ID acts as the recipient
         client.users.send(channelId, downloadLink);
