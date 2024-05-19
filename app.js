@@ -15,6 +15,7 @@ const { initializeSocket } = require('./config/socket');
 const dotenv = require('dotenv');
 const { router: authRoutes } = require('./routes/auth');
 const uploadRoutes = require('./routes/upload');
+const deleteRoutes = require('./routes/delete');
 const downloadRoutes = require('./routes/download');
 const listRoutes = require('./routes/list');
 const discordRoutes = require('./routes/discord');
@@ -41,6 +42,7 @@ app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
 
 app.use('/auth', authRoutes);
 app.use('/putfile', uploadRoutes);
+app.use('/delete', deleteRoutes);
 app.use('/download', downloadRoutes);
 app.use('/list', listRoutes);
 app.use('/discord', discordRoutes);

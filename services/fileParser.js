@@ -113,7 +113,7 @@ const parseAndUpload = async (req, user) => {
 
                         const expirationDate = user.isPremium ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
-                        fileModel.insertFile(fileId, guildId, userId, originalFilename, fileHash, new Date(), expirationDate)
+                        fileModel.insertFile(fileId, guildId, userId, originalFilename, fileHash, fileSize, new Date(), expirationDate)
                             .then(() => {
                                 const downloadLink = `${hostname}/download/${fileId}`;
 

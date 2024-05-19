@@ -1,5 +1,6 @@
 
 const fileModel = require('../models/fileModel');
+const userModel = require('../models/userModel');
 
 // get link map from new.js
 const { invalidateLink } = require('../routes/linkgenerator');
@@ -38,12 +39,16 @@ const getFileById = (fileId) => {
 };
 
 async function isFileIdUsed(fileId) {
-    const file = await fileModel.getFileById(fileId);
+    const file = await getFileById(fileId);
     return file !== null;
 }
 
 const deleteFile = async (fileId) => {
+    const file = await getFileById(fileId);
+    await userModel.removeBytes(file.userid, file.fileSize);
+
     const result = await fileModel.deleteFile(fileId);
+
     return result;
 }
 

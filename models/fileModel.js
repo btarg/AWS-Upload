@@ -10,6 +10,7 @@ const createFileTable = async () => {
       userId VARCHAR(255) NOT NULL,
       filename VARCHAR(255) NOT NULL,
       fileHash VARCHAR(255) NOT NULL,
+      fileSize BIGINT NOT NULL,
       uploadDate TIMESTAMP NOT NULL,
       expiresAt TIMESTAMP
     );
@@ -18,13 +19,13 @@ const createFileTable = async () => {
 };
 
 // Insert a new file record and return its ID
-const insertFile = async (fileId, guildId, userId, filename, fileHash, uploadDate, expiresAt) => {
+const insertFile = async (fileId, guildId, userId, filename, fileHash, fileSize, uploadDate, expiresAt) => {
   const query = `
-    INSERT INTO files (fileId, guildId, userId, filename, fileHash, uploadDate, expiresAt)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO files (fileId, guildId, userId, filename, fileHash, fileSize, uploadDate, expiresAt)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING fileId
   `;
-  const result = await pool.query(query, [fileId, guildId, userId, filename, fileHash, uploadDate, expiresAt]);
+  const result = await pool.query(query, [fileId, guildId, userId, filename, fileHash, fileSize, uploadDate, expiresAt]);
   return result.rows[0].fileId;
 };
 

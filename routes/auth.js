@@ -12,7 +12,7 @@ const discordScope = ["identify", "guilds", "email"];
 // Middleware to check if the user is authenticated with discord
 const checkAuthenticated = async (req, res, next) => {
     try {
-        const discordUser = req.cookies.discordUser;
+        const discordUser = req.cookies.serverDiscordUser;
         if (discordUser && discordUser.id) {
             next();
         } else {
@@ -70,7 +70,8 @@ router.get('/refresh', async (req, res) => {
         res.cookie('refreshToken', newToken.refresh_token);
 
         const oauthDiscordUser = await oauth.getUser(newToken.access_token);
-        res.cookie('discordUser', oauthDiscordUser);
+        res.cookie('serverDiscordUser', oauthDiscordUser, { httpOnly: true });
+        res.cookie('discordUser', oauthDiscordUser, { httpOnly: false });
 
         res.json({ accessToken: newToken.access_token });
     } catch (error) {
@@ -81,7 +82,7 @@ router.get('/refresh', async (req, res) => {
 
 router.get('/discord', (req, res) => {
     const redirectUri = `${req.protocol}://${req.get('host')}/auth/callback`;
-    if (req.cookies.user && req.cookies.discordUser) {
+    if (req.cookies.serverUser && req.cookies.serverDiscordUser) {
         // If the user is already authenticated, redirect to the redirectUri
         res.redirect(redirectUri);
     } else {
@@ -115,7 +116,7 @@ router.get('/callback', async (req, res) => {
             throw new Error("User is not verified");
         }
         req.session.accessToken = token.access_token;
-
+        res.cookie('serverDiscordUser', oauthDiscordUser, { httpOnly: true });
         res.cookie('refreshToken', token.refresh_token);
         res.cookie('discordUser', oauthDiscordUser);
 
@@ -136,7 +137,7 @@ router.get('/callback', async (req, res) => {
 
 router.get('/user', checkAuthenticated, async (req, res) => {
     try {
-        const discordUser = req.cookies.discordUser;
+        const discordUser = req.cookies.serverDiscordUser;
         const dbUser = await userModel.getUserById(discordUser.id);
         // if we have a valid discord user but no db entry, create a db entry (edgecase)
         if (dbUser.id === undefined && discordUser.id) {
@@ -144,6 +145,7 @@ router.get('/user', checkAuthenticated, async (req, res) => {
             await userModel.upsertUserData(discordUser.id, false, null, 0);
         }
         res.cookie('user', dbUser); // update the user cookie with the database user
+        res.cookie('serverUser', dbUser, { httpOnly: true });
         res.json(dbUser);
     } catch (error) {
         console.error('Error fetching user data', error);
@@ -151,7 +153,7 @@ router.get('/user', checkAuthenticated, async (req, res) => {
     }
 });
 router.get('/discordUser', checkAuthenticated, (req, res) => {
-    res.json(req.cookies.discordUser);
+    res.json(req.cookies.serverDiscordUser);
 });
 
 module.exports = { router, checkAuthenticated };

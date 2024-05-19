@@ -19,11 +19,15 @@ router.post('/', checkAuthenticated, async (req, res) => {
     const fileSize = Number(req.headers['filesize']);
     const guildId = req.headers['guildid'];
     const channelId = req.headers['channelid'];
-    const userId = req.headers['userid'];
     const isDM = req.headers['isdm'];
 
     const hostname = getFullHostname(req.hostname);
 
+    const userId = req.cookies.serverUser.id;
+
+    if (!userId) {
+        return res.status(404).send("User not found");
+    }
     let user;
     try {
         user = await userModel.getUserById(userId);

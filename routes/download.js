@@ -12,12 +12,11 @@ router.get('/:id', async (req, res) => {
 
     const result = await pool.query('SELECT * FROM files WHERE fileId = $1', [fileId]);
     console.log(result);
+    const file = result.rows[0];
 
-    if (!result || result.length === 0) {
+    if (!file || result.length === 0) {
         return res.status(404).send('File not found');
     }
-
-    const file = result.rows[0];
 
     const key = `${file.guildid}/${file.userid}/${file.filename}`;
     console.log('Downloading file:', key);
@@ -29,7 +28,8 @@ router.get('/:id', async (req, res) => {
 
     try {
         const command = new GetObjectCommand(params);
-        const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 21600 }); // Expires in 1 hour
+        // Expires in 15 mins, even if the url expires during download it will continue downloading
+        const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 600 });
         console.log("Signed S3 URL: " + signedUrl);
         res.redirect(signedUrl);
     } catch (error) {

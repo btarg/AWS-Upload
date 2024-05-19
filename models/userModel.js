@@ -86,9 +86,9 @@ const addBytes = async (userId, bytes) => {
     WHERE id = $1
   `;
     try {
-        const result = await pool.query(query, [userId, bytes]);
+        await pool.query(query, [userId, bytes]);
     } catch (error) {
-        console.error('Error updating bytesUsed:', error);
+        console.error('Error updating bytes used:', error);
     }
 };
 
@@ -99,7 +99,11 @@ const removeBytes = async (userId, bytes) => {
     SET bytesUsed = GREATEST(0, bytesUsed - $2)
     WHERE id = $1
   `;
-    await pool.query(query, [userId, bytes]);
+    try {
+        await pool.query(query, [userId, bytes]);
+    } catch (error) {
+        console.error('Error removing bytes used:', error);
+    }
 };
 
 module.exports = {
