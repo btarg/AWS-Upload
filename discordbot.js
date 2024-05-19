@@ -124,7 +124,7 @@ eventEmitter.on('fileUploaded', async (eventData) => {
             },
             {
                 name: "Size",
-                value: "11gb"; //TODO: pretty bytes
+                value: "11gb", //TODO: pretty bytes
                 inline: true
             },
         )
