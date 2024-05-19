@@ -111,7 +111,7 @@ const parseAndUpload = async (req, user) => {
                             .then(() => {
                                 const downloadLink = `${hostname}/download/${fileId}`;
 
-                                fileService.emitFileUploaded(channelId, userId, isDM, file.originalFilename, downloadLink);
+                                fileService.emitFileUploaded(channelId, userId, isDM, file.originalFilename, fileSize, downloadLink);
                                 console.log(`Finished uploading to AWS: ${file.originalFilename} to guild ${guildId}, channel ${channelId}, user ${userId}`);
 
                                 resolve({ downloadLink: downloadLink });

@@ -4,7 +4,7 @@
 
   <label v-if="authStore.loggedIn">{{
     authStore.discordUser ? authStore.discordUser.username : ""
-  }}</label>
+    }}</label>
 
   <GuildDropdown v-if="authStore.loggedIn" @guild-selected="handleGuildSelected" />
   <Uploader v-if="selectedGuildId && authStore.loggedIn" :selectedGuildId="selectedGuildId" />
@@ -20,13 +20,13 @@ import { ref, onMounted } from "vue";
 import { useAuthStore } from "../stores/authStore.js";
 import GuildDropdown from "../components/GuildDropdown.vue";
 import Uploader from "../components/Uploader.vue";
-import { prettyPrintBytes } from "../utils.js";
+import { prettyBytesPSQL } from "../util.js";
 
 const authStore = useAuthStore();
 const bytesUsed = ref("");
 const bytesAllowed = ref("");
 
-import { onBeforeUnmount, nextTick } from "vue";
+import { onBeforeUnmount } from "vue";
 
 let intervalId;
 
@@ -43,8 +43,8 @@ async function updateUserData() {
   try {
     await authStore.updateDBUser();
     if (authStore.user) {
-      bytesUsed.value = prettyPrintBytes(authStore.user.bytesUsed);
-      bytesAllowed.value = prettyPrintBytes(authStore.user.bytesAllowed);
+      bytesUsed.value = prettyBytesPSQL(authStore.user.bytesUsed);
+      bytesAllowed.value = prettyBytesPSQL(authStore.user.bytesAllowed);
     }
   } catch (error) {
     console.error('Error updating user data:', error);

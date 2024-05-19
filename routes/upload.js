@@ -3,7 +3,7 @@ const parseAndUpload = require('../services/fileParser');
 const { checkAuthenticated } = require('../routes/auth');
 const cookieParser = require('cookie-parser');
 const fileService = require('../services/fileService');
-const numberFromPSQL = require('../utils/conversions');
+const numberFromPSQL = require('../utils/conversions').default;
 const { getFullHostname } = require('../utils/hostname');
 const userModel = require('../models/userModel');
 
@@ -54,7 +54,7 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
                 // If the file already exists, return the original copy
                 const downloadLink = `${hostname}/download/${existingFile.fileid}`; // remember, no capitals here!
                 console.log("Existing download link: " + downloadLink);
-                fileService.emitFileUploaded(channelId, userId, isDM, existingFile.filename, downloadLink);
+                fileService.emitFileUploaded(channelId, userId, isDM, existingFile.filename, fileSize, downloadLink);
                 return res.status(200).json({ message: 'File already exists', downloadLink: downloadLink });
             }
             else {

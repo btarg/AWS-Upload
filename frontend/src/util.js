@@ -1,4 +1,8 @@
-function numberFromPSQL(input) {
+import prettyBytes from 'pretty-bytes';
+// Convert Number from the formal PostgreSQL uses.
+// I HATE that I have to rewrite this because VueJS doesn't want me to use "require"
+// Like, why the fuck not? Let me require shit VueJS!
+export function numberFromPSQL(input) {
     var converted = input;
 
     // Convert string to BigInt
@@ -15,4 +19,8 @@ function numberFromPSQL(input) {
     }
     return converted;
 }
-module.exports = { numberFromPSQL };
+
+export function prettyBytesPSQL(bytes) {
+    const converted = numberFromPSQL(bytes);
+    return prettyBytes(converted);
+}

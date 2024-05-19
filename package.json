@@ -23,6 +23,7 @@
     "express-rate-limit": "^7.2.0",
     "express-session": "^1.18.0",
     "formidable": "^2.1.1",
+    "friendly-mimes": "^2.0.0",
     "pg": "^8.11.5",
     "socket.io": "^4.7.5"
   }
