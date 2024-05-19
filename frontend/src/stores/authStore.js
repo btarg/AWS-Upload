@@ -17,7 +17,7 @@ export const useAuthStore = defineStore('auth', {
                 },
                 body: JSON.stringify({ redirect: window.location.href })
             }).then(() => {
-                window.location.href = '/auth/discord';
+                window.location.href = '/auth/login';
             });
         },
 

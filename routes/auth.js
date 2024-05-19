@@ -47,7 +47,7 @@ router.post('/storeRedirect', (req, res) => {
     res.sendStatus(200);
 });
 
-router.get('/refresh', async (req, res) => {
+router.get('/refresh', checkAuthenticated, async (req, res) => {
     console.log("Refreshing token endpoint");
 
     const refreshToken = req.cookies.refreshToken;
@@ -80,7 +80,7 @@ router.get('/refresh', async (req, res) => {
     }
 });
 
-router.get('/discord', (req, res) => {
+router.get('/login', (req, res) => {
     const redirectUri = `${req.protocol}://${req.get('host')}/auth/callback`;
     if (req.cookies.serverUser && req.cookies.serverDiscordUser) {
         // If the user is already authenticated, redirect to the redirectUri
