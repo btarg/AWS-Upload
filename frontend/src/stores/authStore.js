@@ -34,84 +34,89 @@ export const useAuthStore = defineStore('auth', {
                 });
         },
         updateDiscordUser() {
-            const discordUserCookie = document.cookie.split('; ').find(row => row.startsWith('discordUser=j:'));
-            console.log('Stored discordUser:', discordUserCookie);
+            return new Promise((resolve, reject) => {
+                const discordUserCookie = document.cookie.split('; ').find(row => row.startsWith('discordUser=j:'));
+                console.log('Stored discordUser:', discordUserCookie);
 
-            if (discordUserCookie) {
-                this.discordUser = JSON.parse(decodeURIComponent(discordUserCookie.split('=')[1].substring(2)));
-                if (this.discordUser.id) {
-                    this.loggedIn = true;
+                if (discordUserCookie) {
+                    this.discordUser = JSON.parse(decodeURIComponent(discordUserCookie.split('=')[1].substring(2)));
+                    if (this.discordUser.id) {
+                        this.loggedIn = true;
+                        resolve(this.discordUser);
+                    } else {
+                        this.discordUser = null;
+                        reject(new Error("Invalid Discord User Cookie!"));
+                    }
                 } else {
-                    this.discordUser = null
-                    throw new Error("Invalid Discord User Cookie!");
+                    // Fetch the Discord user data
+                    fetch("/discord/user")
+                        .then((response) => response.json())
+                        .then((discordUserData) => {
+                            this.discordUser = discordUserData;
+                            document.cookie = `discordUser=j:${encodeURIComponent(JSON.stringify(discordUserData))}`;
+                            resolve(discordUserData);
+                        })
+                        .catch((error) => {
+                            console.error("Error:", error);
+                            this.resetUser();
+                            reject(error);
+                        });
                 }
-
-            } else {
-                // Fetch the Discord user data
-                fetch("/discord/user")
-                    .then((response) => response.json())
-                    .then((discordUserData) => {
-                        this.discordUser = discordUserData;
-                        document.cookie = `discordUser=j:${encodeURIComponent(JSON.stringify(discordUserData))}`;
-                    })
-                    .catch((error) => {
-                        console.error("Error:", error);
-                        this.resetUser();
-                    });
-            }
+            });
         },
         updateDBUser(override = false) {
-            this.loggedIn = false;
+            return new Promise((resolve, reject) => {
+                this.loggedIn = false;
 
-            // Check if the user's authentication status is already stored in the cookies
-            const userCookie = document.cookie.split('; ').find(row => row.startsWith('user=j:'));
-            console.log('Stored user:', userCookie);
+                // Check if the user's authentication status is already stored in the cookies
+                const userCookie = document.cookie.split('; ').find(row => row.startsWith('user=j:'));
+                console.log('Stored user:', userCookie);
 
-            if (userCookie && !override) {
-                this.user = JSON.parse(decodeURIComponent(userCookie.split('=')[1].substring(2)));
-                if (this.user.id) {
-                    this.loggedIn = true;
-                    // if we're not overriding and we already have a cookie,
-                    // then don't bother fetching a new user
-                    return this.user;
-                } else {
-                    // don't throw an error here - just refetch the DB user
-                    this.user = null
-                }
-            }
-
-            // Fetch the DB user data
-            console.log("Fetching DB user data");
-            fetch("/auth/user")
-                .then((response) => {
-                    if (!response.ok) {
-                        this.resetUser();
-                        throw new Error(response.statusText);
-                    }
-                    console.log('Auth User Response:', response);
-                    return response.json();
-                })
-                .then((dbUserData) => {
-                    if (dbUserData && Object.keys(dbUserData).length > 0) {
-                        console.log(dbUserData);
-                        this.user = dbUserData;
+                if (userCookie && !override) {
+                    this.user = JSON.parse(decodeURIComponent(userCookie.split('=')[1].substring(2)));
+                    if (this.user.id) {
                         this.loggedIn = true;
+                        resolve(this.user);
                     } else {
-                        console.log("No user data returned from /auth/user");
                         this.resetUser();
+                        reject(new Error("No user id found in cookie"));
                     }
-                })
-                .catch((error) => {
-                    if (error.message === "Not authenticated") {
-                        this.resetUser();
-                    }
-                });
+                } else {
+                    fetch("/auth/user")
+                        .then((response) => {
+                            if (!response.ok) {
+                                this.resetUser();
+                                throw new Error(response.statusText);
+                            }
+                            return response.json();
+                        })
+                        .then((dbUserData) => {
+                            if (dbUserData && Object.keys(dbUserData).length > 0) {
+                                this.user = dbUserData;
+                                this.loggedIn = true;
+                                resolve(dbUserData);
+                            } else {
+                                this.resetUser();
+                                reject(new Error("No user data returned from /auth/user"));
+                            }
+                        })
+                        .catch((error) => {
+                            if (error.message === "Not authenticated") {
+                                this.resetUser();
+                            }
+                            reject(error);
+                        });
+                }
+            });
         },
 
-        updateLogin() {
-            this.updateDBUser();
-            this.updateDiscordUser();
-
+        async updateLogin() {
+            try {
+                await this.updateDBUser();
+                await this.updateDiscordUser();
+            } catch (error) {
+                console.error('Error updating login:', error);
+            }
         },
 
         resetUser() {

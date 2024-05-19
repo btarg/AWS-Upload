@@ -122,7 +122,7 @@ router.get('/callback', async (req, res) => {
         }
 
         // Redirect to the previous page which is saved in session
-        res.redirect(redirect); 
+        res.redirect(redirect);
     } catch (error) {
         console.error('Error during OAuth callback', error);
         // Removed the line that sends a response before redirecting
@@ -134,6 +134,11 @@ router.get('/user', checkAuthenticated, async (req, res) => {
     try {
         const discordUser = req.cookies.discordUser;
         const dbUser = await userModel.getUserById(discordUser.id);
+        // if we have a valid discord user but no db entry, create a db entry (edgecase)
+        if (dbUser.id === undefined && discordUser.id) {
+            console.log('Discord user detected but no DB record. Creating user in database');
+            await userModel.upsertUserData(discordUser.id, false, null, 0);
+        }
         res.cookie('user', dbUser); // update the user cookie with the database user
         res.json(dbUser);
     } catch (error) {
