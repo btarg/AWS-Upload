@@ -56,7 +56,7 @@ function emitFileUploaded(channelId, userId, isDM, fileName, downloadLink) {
 function searchFile(guildId, userId, filename) {
     return new Promise(async (resolve, reject) => {
         // Use the LIKE operator with a wildcard to search for partial names
-        pool.query('SELECT * FROM files WHERE guildId = $1 AND userId = $2 AND filename LIKE $3', [guildId, userId, '%' + filename + '%'], (error, results) => {
+        pool.query('SELECT * FROM files WHERE guildId = $1 AND userId = $2 AND (filename LIKE $3 OR filehash LIKE $3)', [guildId, userId, `%${filename}%`], (error, results) => {
             if (error) {
                 reject(error);
             } else if (results.rows.length > 0) {
