@@ -5,17 +5,21 @@ const userModel = require('../models/userModel');
 const router = express.Router();
 const cookieParser = require('cookie-parser');
 
-// Use the cookie-parser middleware
 router.use(cookieParser());
 
 const discordScope = ["identify", "guilds", "email"];
 
 // Middleware to check if the user is authenticated with discord
 const checkAuthenticated = async (req, res, next) => {
-    const discordUser = req.cookies.discordUser;
-    if (discordUser && discordUser.id) {
-        next();
-    } else {
+    try {
+        const discordUser = req.cookies.discordUser;
+        if (discordUser && discordUser.id) {
+            next();
+        } else {
+            throw new Error('Not authenticated');
+        }
+    } catch (error) {
+        console.error('Error checking authentication', error);
         res.status(401).send('Not authenticated'); // Respond with an error
     }
 };

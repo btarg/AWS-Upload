@@ -1,18 +1,19 @@
 const express = require('express');
 const parseAndUpload = require('../services/fileParser');
-const { checkAuthenticated } = require('../routes/auth')
+const { checkAuthenticated } = require('../routes/auth');
+const cookieParser = require('cookie-parser');
 const fileService = require('../services/fileService');
 const numberFromPSQL = require('../utils/conversions');
 const { getFullHostname } = require('../utils/hostname');
-
 const userModel = require('../models/userModel');
 
 require('dotenv').config();
 
-
 const router = express.Router();
+router.use(cookieParser());
 
-router.post('/', async (req, res) => {
+
+router.post('/', checkAuthenticated, async (req, res) => {
     // these are the same headers that will be passed to the parser
     const fileHash = req.headers['filehash'];
     const fileSize = Number(req.headers['filesize']);
