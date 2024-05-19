@@ -11,6 +11,8 @@ import { createUploadLink } from './routes/linkgenerator.js';
 import { eventEmitter, searchFile } from './services/fileService.js';
 import { getFullHostname } from './utils/hostname.js';
 import { resolveFileType } from 'friendly-mimes';
+import prettyBytes from 'pretty-bytes';
+
 
 client.login(process.env.DISCORD_BOT_TOKEN);
 
@@ -79,8 +81,8 @@ client.on('interactionCreate', async (interaction) => {
 });
 
 
-eventEmitter.on('fileUploaded', async (eventData) => {
-    const { channelId, userId, isDM, fileName, fileSize, downloadLink } = eventData;
+eventEmitter.on('fileUploaded', (eventData) => {
+    const { channelId, userData, isDM, fileName, fileSize, downloadLink } = eventData;
 
     const channel = client.channels.cache.get(channelId);
     if (!channel) {
@@ -88,9 +90,7 @@ eventEmitter.on('fileUploaded', async (eventData) => {
         return;
     }
 
-    const member = await channel.guild.members.fetch(userId);
-    const displayName = member.displayName;
-    console.log(displayName);
+    const displayName = userData.global_name;
 
     const ext = "." + fileName
         .split('.')
@@ -98,20 +98,25 @@ eventEmitter.on('fileUploaded', async (eventData) => {
         .slice(1)
         .join('.')
     const fileMime = resolveFileType(ext); // get friendly mime data
-
-    const user = client.users.cache.get(userId);
-    let avatarURL;
-    if (user) {
-        avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true });
+    let avatarURL = "";
+    if (userData) {
+        // get avatar url from the hash on userData
+        const avatarHash = userData.avatar;
+        const userId = userData.id;
+        if (avatarHash) {
+            avatarURL = `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png`;
+        } else {
+            // default avatar if user has no avatar
+            avatarURL = `https://cdn.discordapp.com/embed/avatars/${userId % 5}.png`;
+        }
         console.log(avatarURL);
     } else {
         console.log('User not found');
         return;
     }
-
     const embed = new EmbedBuilder()
         .setAuthor({
-            name: displayName, // use the displayName instead of user.username
+            name: `${displayName} uploaded a file:`, // use the displayName instead of user.username
             url: downloadLink,
             iconURL: avatarURL
         })
@@ -125,14 +130,14 @@ eventEmitter.on('fileUploaded', async (eventData) => {
             },
             {
                 name: "Size",
-                value: "11gb", //TODO: pretty bytes
+                value: prettyBytes(fileSize),
                 inline: true
             },
         )
         .setThumbnail("https://slate.dan.onl/slate.png") // TODO: thumbnail based on filetype
-        .setColor(user.accent_color.toString(16).padStart(6, '0'))
+        .setColor(userData.accent_color.toString(16).padStart(6, '0'))
         .setFooter({
-            text: displayName, // use the displayName instead of user.username
+            text: displayName,
             iconURL: avatarURL,
         })
         .setTimestamp();

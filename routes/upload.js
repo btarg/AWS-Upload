@@ -27,15 +27,16 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
 
     const hostname = getFullHostname(req.hostname);
 
-    const userId = req.cookies.serverUser.id;
+    const discordUserData = req.cookies.serverDiscordUser;
+    const userId = discordUserData.id;
 
     if (!userId) {
         return res.status(404).send("User not found");
     }
-    let user;
+    let dbUser;
     try {
-        user = await getUserById(userId);
-        if (!user) {
+        dbUser = await getUserById(userId);
+        if (!dbUser) {
             console.log("User not found");
             return res.status(404).send("User not found");
         }
@@ -51,13 +52,13 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
                 // If the file already exists, return the original copy
                 const downloadLink = `${hostname}/download/${existingFile.fileid}`; // remember, no capitals here!
                 console.log("Existing download link: " + downloadLink);
-                emitFileUploaded(channelId, userId, isDM, existingFile.filename, fileSize, downloadLink);
+                emitFileUploaded(channelId, discordUserData, isDM, existingFile.filename, fileSize, downloadLink);
                 return res.status(200).json({ message: 'File already exists', downloadLink: downloadLink });
             }
             else {
                 console.log("File does not already exist");
-                var bytesUsed = numberFromPSQL(user.bytesUsed);
-                var bytesAllowed = numberFromPSQL(user.bytesAllowed);
+                var bytesUsed = numberFromPSQL(dbUser.bytesUsed);
+                var bytesAllowed = numberFromPSQL(dbUser.bytesAllowed);
                 const bytesAboutToBeUsed = bytesUsed + fileSize;
 
                 console.log("FILE SIZE IS " + fileSize);
@@ -71,7 +72,7 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
                 }
 
                 try {
-                    const data = await parseAndUpload(req, user);
+                    const data = await parseAndUpload(req, dbUser);
                     // pass the data directly on success. the json should include downloadLink
                     return res.status(200).json(data);
                 } catch (error) {

@@ -26,6 +26,7 @@
     "formidable": "^2.1.1",
     "friendly-mimes": "^2.0.0",
     "pg": "^8.11.5",
+    "pretty-bytes": "^6.1.1",
     "socket.io": "^4.7.5"
   }
 }
