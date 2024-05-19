@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# timestamped vite config
+vite.config.js.timestamp-*.mjs
