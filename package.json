@@ -2,7 +2,8 @@
   "name": "aws-upload",
   "version": "1.0.0",
   "description": "AWS Upload",
-  "main": "app.js",
+  "exports": "./app.js",
+  "type": "module",
   "scripts": {
     "start": "node app.js",
     "dev": "npm run build && nodemon app.js",

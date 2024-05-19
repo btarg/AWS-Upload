@@ -1,10 +1,10 @@
-const socketIo = require('socket.io');
+import { Server } from 'socket.io';
 let io;
 
-const initializeSocket = async (server) => {
+export const initializeSocket = async (httpServer) => {
     try {
         if (!io) {
-            io = socketIo(server);
+            io = new Server(httpServer);
         }
         return io;
     } catch (error) {
@@ -12,11 +12,9 @@ const initializeSocket = async (server) => {
     }
 };
 
-const getIo = () => {
+export const getIo = () => {
     if (!io) {
-        console.error('Socket.io has not been initialized. Please call initializeSocket first.');
+        throw new Error('Socket.io has not been initialized. Please call initializeSocket first.');
     }
     return io;
 };
-
-module.exports = { initializeSocket, getIo };

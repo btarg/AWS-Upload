@@ -1,24 +1,27 @@
-require("dotenv").config();
-const { accessKeyId, secretAccessKey, region, Bucket } = require('../config/aws');
-const formidable = require('formidable');
-const { Upload } = require("@aws-sdk/lib-storage");
-const { S3Client, S3 } = require("@aws-sdk/client-s3");
-const Transform = require('stream').Transform;
-const fileService = require('../services/fileService');
-const userModel = require('../models/userModel');
-const fileModel = require('../models/fileModel');
-const { isLinkValid, generateId } = require('../routes/linkgenerator');
-const { getFullHostname } = require('../utils/hostname');
-const { getIo } = require('../config/socket');
-const io = getIo();
+import dotenv from "dotenv";
+import { accessKeyId, secretAccessKey, region, Bucket } from '../config/aws.js';
+import formidable from 'formidable';
+import { Upload } from "@aws-sdk/lib-storage";
+import { S3Client } from "@aws-sdk/client-s3";
+import { Transform } from 'stream';
+import { emitFileUploaded } from '../services/fileService.js';
+import { addBytes } from '../models/userModel.js';
+import { insertFile } from '../models/fileModel.js';
+import { generateId } from '../routes/linkgenerator.js';
+import { getFullHostname } from '../utils/hostname.js';
+import { getIo } from '../config/socket.js';
 
-const parseAndUpload = async (req, user) => {
+dotenv.config();
+
+export const parseAndUpload = async (req, user) => {
     return new Promise(async (resolve, reject) => {
         let options = {
             maxFileSize: (process.env.MB_MAX || 100) * 1024 * 1024, //100 megabytes converted to bytes,
             allowEmptyFiles: false,
             hashAlgorithm: 'sha1'
         }
+
+        const io = getIo();
 
         const fileHash = req.headers['filehash'];
         const fileSize = Number(req.headers['filesize']);
@@ -103,15 +106,15 @@ const parseAndUpload = async (req, user) => {
                         form.emit('data', { name: "complete", value: data });
 
                         // add bytes to user
-                        userModel.addBytes(userId, fileSize);
+                        addBytes(userId, fileSize);
 
                         const expirationDate = user.isPremium ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
-                        fileModel.insertFile(fileId, guildId, userId, originalFilename, fileHash, fileSize, new Date(), expirationDate)
+                        insertFile(fileId, guildId, userId, originalFilename, fileHash, fileSize, new Date(), expirationDate)
                             .then(() => {
                                 const downloadLink = `${hostname}/download/${fileId}`;
 
-                                fileService.emitFileUploaded(channelId, userId, isDM, file.originalFilename, fileSize, downloadLink);
+                                emitFileUploaded(channelId, userId, isDM, file.originalFilename, fileSize, downloadLink);
                                 console.log(`Finished uploading to AWS: ${file.originalFilename} to guild ${guildId}, channel ${channelId}, user ${userId}`);
 
                                 resolve({ downloadLink: downloadLink });
@@ -136,5 +139,3 @@ const parseAndUpload = async (req, user) => {
         })
     })
 }
-
-module.exports = parseAndUpload;

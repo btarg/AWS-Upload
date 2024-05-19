@@ -1,6 +1,7 @@
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
 
-function getFullHostname(hostname) {
+export function getFullHostname(hostname) {
     // add http or https to the hostname dependent on env var for https
     if (process.env.HTTPS === 'true') {
         hostname = `https://${hostname}`;
@@ -13,5 +14,3 @@ function getFullHostname(hostname) {
     }
     return hostname;
 }
-
-module.exports = { getFullHostname };

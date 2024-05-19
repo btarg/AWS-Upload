@@ -1,10 +1,11 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-require('dotenv').config();
-const pool = require('../config/database');
-const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-const rateLimit = require("express-rate-limit");
+import dotenv from 'dotenv';
+dotenv.config();
+import pool from '../config/database.js';
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import rateLimit from "express-rate-limit";
 
 const s3Client = new S3Client({ region: process.env.S3_REGION });
 
@@ -66,4 +67,4 @@ router.get('/:id', limiter, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

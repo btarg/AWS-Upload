@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
+import dotenv from 'dotenv';
 const router = express.Router();
-
-require('dotenv').config();
+dotenv.config();
 
 router.get('/', (req, res) => {
     res.json({
@@ -10,4 +10,4 @@ router.get('/', (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

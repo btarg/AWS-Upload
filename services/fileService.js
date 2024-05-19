@@ -1,14 +1,13 @@
+import { deleteFile } from '../models/fileModel.js';
+import { removeBytes } from '../models/userModel.js';
 
-const fileModel = require('../models/fileModel');
-const userModel = require('../models/userModel');
-
-const events = require('events');
-const pool = require('../config/database');
+import events from 'events';
+import pool from '../config/database.js';
 
 // Create an event emitter
-const eventEmitter = new events.EventEmitter();
+export const eventEmitter = new events.EventEmitter();
 
-const getFileByHash = (fileHash, guildId) => {
+export const getFileByHash = (fileHash, guildId) => {
     return new Promise((resolve, reject) => {
         pool.query('SELECT * FROM files WHERE guildId = $1 AND fileHash = $2', [guildId, fileHash], (error, results) => {
             if (error) {
@@ -21,7 +20,7 @@ const getFileByHash = (fileHash, guildId) => {
         });
     });
 };
-const getFileById = (fileId) => {
+export const getFileById = (fileId) => {
     return new Promise((resolve, reject) => {
         pool.query('SELECT * FROM files WHERE fileId = $1', [fileId], (error, results) => {
             if (error) {
@@ -35,25 +34,23 @@ const getFileById = (fileId) => {
     });
 };
 
-async function isFileIdUsed(fileId) {
+export async function isFileIdUsed(fileId) {
     const file = await getFileById(fileId);
     return file !== null;
 }
 
-const deleteFile = async (fileId) => {
+export async function deleteFileById(fileId) {
     const file = await getFileById(fileId);
-    await userModel.removeBytes(file.userid, file.fileSize);
-
-    const result = await fileModel.deleteFile(fileId);
-
+    await removeBytes(file.userid, file.fileSize);
+    const result = await deleteFile(fileId);
     return result;
 }
 
-function emitFileUploaded(channelId, userId, isDM, fileName, downloadLink) {
+export function emitFileUploaded(channelId, userId, isDM, fileName, downloadLink) {
     eventEmitter.emit('fileUploaded', { channelId: channelId, userId: userId, isDM: isDM, fileName: fileName, downloadLink: downloadLink });
 }
 
-function searchFile(guildId, userId, filename) {
+export function searchFile(guildId, userId, filename) {
     return new Promise(async (resolve, reject) => {
         // Use the LIKE operator with a wildcard to search for partial names
         pool.query('SELECT * FROM files WHERE guildId = $1 AND userId = $2 AND (filename LIKE $3 OR filehash LIKE $3)', [guildId, userId, `%${filename}%`], (error, results) => {
@@ -67,13 +64,3 @@ function searchFile(guildId, userId, filename) {
         });
     });
 }
-
-module.exports = {
-    deleteFile,
-    getFileByHash,
-    getFileById,
-    isFileIdUsed,
-    eventEmitter,
-    emitFileUploaded,
-    searchFile
-};

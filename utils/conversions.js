@@ -1,4 +1,4 @@
-function numberFromPSQL(input) {
+export function numberFromPSQL(input) {
     var converted = input;
 
     // Convert string to BigInt
@@ -15,4 +15,3 @@ function numberFromPSQL(input) {
     }
     return converted;
 }
-module.exports = { numberFromPSQL };

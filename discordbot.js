@@ -1,15 +1,16 @@
-const { Client, EmbedBuilder, IntentsBitField, SlashCommandBuilder } = require('discord.js');
+import { Client, EmbedBuilder, IntentsBitField, SlashCommandBuilder } from 'discord.js';
 
-const client = new Client({
+export const client = new Client({
     // should be able to read and write to guilds, read guild members, read messages, and read message content
     intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent]
 });
-require('dotenv').config();
 
-const { createUploadLink } = require('./routes/linkgenerator');
-const { eventEmitter, searchFile } = require('./services/fileService');
-const { getFullHostname } = require('./utils/hostname');
-const { resolveFileType } = require('friendly-mimes');
+import dotenv from 'dotenv';
+dotenv.config();
+import { createUploadLink } from './routes/linkgenerator.js';
+import { eventEmitter, searchFile } from './services/fileService.js';
+import { getFullHostname } from './utils/hostname.js';
+import { resolveFileType } from 'friendly-mimes';
 
 client.login(process.env.DISCORD_BOT_TOKEN);
 
@@ -145,6 +146,4 @@ eventEmitter.on('fileUploaded', async (eventData) => {
     }
 });
 
-module.exports = {
-    client
-};
+export default { client };

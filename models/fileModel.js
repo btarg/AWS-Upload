@@ -1,7 +1,7 @@
-const pool = require('../config/database');
+import pool from '../config/database.js';
 
 // Create the files table if it doesn't exist
-const createFileTable = async () => {
+export const createFileTable = async () => {
   const query = `
     CREATE TABLE IF NOT EXISTS files (
       id SERIAL PRIMARY KEY,
@@ -19,7 +19,7 @@ const createFileTable = async () => {
 };
 
 // Insert a new file record and return its ID
-const insertFile = async (fileId, guildId, userId, filename, fileHash, fileSize, uploadDate, expiresAt) => {
+export const insertFile = async (fileId, guildId, userId, filename, fileHash, fileSize, uploadDate, expiresAt) => {
   const query = `
     INSERT INTO files (fileId, guildId, userId, filename, fileHash, fileSize, uploadDate, expiresAt)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -30,7 +30,7 @@ const insertFile = async (fileId, guildId, userId, filename, fileHash, fileSize,
 };
 
 // Get expired files
-const getExpiredFiles = async () => {
+export const getExpiredFiles = async () => {
   const now = new Date();
   const currentDate = now.toISOString();
 
@@ -40,14 +40,7 @@ const getExpiredFiles = async () => {
 };
 
 // Delete a file record
-const deleteFile = async (id) => {
+export const deleteFile = async (id) => {
   const query = 'DELETE FROM files WHERE fileId = $1';
   await pool.query(query, [id]);
-};
-
-module.exports = {
-  createFileTable,
-  insertFile,
-  getExpiredFiles,
-  deleteFile,
 };

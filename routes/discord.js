@@ -1,10 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const https = require('https');
-const { client } = require('../discordbot');
-const { checkAuthenticated } = require("./auth");
+import https from 'https';
+import { client } from '../discordbot.js';
+import { checkAuthenticated } from "./auth.js";
 
-const cookieParser = require('cookie-parser');
+import cookieParser from 'cookie-parser';
 
 router.use(cookieParser());
 
@@ -85,5 +85,4 @@ router.get('/user', checkAuthenticated, (req, res) => {
     request.end();
 });
 
-// export router
-module.exports = router;
+export default router;

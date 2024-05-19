@@ -1,14 +1,13 @@
-const fileModel = require('../models/fileModel');
-const userModel = require('../models/userModel');
+import { createFileTable } from '../models/fileModel';
+import { createUserTable } from '../models/userModel';
 
-const initializeDatabase = async () => {
+export const initializeDatabase = async () => {
     try {
         console.log("Creating tables...");
-        await fileModel.createFileTable();
-        await userModel.createUserTable();
+        await createFileTable();
+        await createUserTable();
         console.log('Database initialized');
     } catch (error) {
         console.error('Error initializing database', error);
     }
 };
-module.exports = { initializeDatabase };

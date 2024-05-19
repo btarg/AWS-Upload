@@ -1,11 +1,10 @@
-const express = require('express');
+import express from 'express';
+import { getAllUsers } from '../models/userModel.js';
+import { adminAuth } from './admin.js';
+import pool from '../config/database.js';
+
 const router = express.Router();
-const { getAllUsers } = require('../models/userModel');
 
-// import admin.js
-const { adminAuth } = require('./admin');
-
-const pool = require('../config/database');
 
 const listFiles = async () => {
     const query = `
@@ -35,4 +34,4 @@ router.get('/users', adminAuth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

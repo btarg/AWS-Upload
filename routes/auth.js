@@ -1,16 +1,16 @@
-const express = require('express');
-const oauth = require('../config/oauth2');
-const userModel = require('../models/userModel');
+import express from 'express';
+import { oauth } from '../config/oauth2.js';
+import { getUserById, upsertUserData } from '../models/userModel.js';
+import cookieParser from 'cookie-parser';
 
 const router = express.Router();
-const cookieParser = require('cookie-parser');
 
 router.use(cookieParser());
 
 const discordScope = ["identify", "guilds", "email"];
 
 // Middleware to check if the user is authenticated with discord
-const checkAuthenticated = async (req, res, next) => {
+export const checkAuthenticated = async (req, res, next) => {
     try {
         const discordUser = req.cookies.serverDiscordUser;
         if (discordUser && discordUser.id) {
@@ -121,9 +121,9 @@ router.get('/callback', async (req, res) => {
         res.cookie('discordUser', oauthDiscordUser);
 
         // Save the user data to the database if they are not already present
-        const existingUser = await userModel.getUserById(oauthDiscordUser.id);
+        const existingUser = await getUserById(oauthDiscordUser.id);
         if (existingUser.id === undefined) {
-            await userModel.upsertUserData(oauthDiscordUser.id, false, null, 0);
+            await upsertUserData(oauthDiscordUser.id, false, null, 0);
         }
 
         // Redirect to the previous page which is saved in session
@@ -138,11 +138,11 @@ router.get('/callback', async (req, res) => {
 router.get('/user', checkAuthenticated, async (req, res) => {
     try {
         const discordUser = req.cookies.serverDiscordUser;
-        const dbUser = await userModel.getUserById(discordUser.id);
+        const dbUser = await getUserById(discordUser.id);
         // if we have a valid discord user but no db entry, create a db entry (edgecase)
         if (dbUser.id === undefined && discordUser.id) {
             console.log('Discord user detected but no DB record. Creating user in database');
-            await userModel.upsertUserData(discordUser.id, false, null, 0);
+            await upsertUserData(discordUser.id, false, null, 0);
         }
         res.cookie('user', dbUser); // update the user cookie with the database user
         res.cookie('serverUser', dbUser, { httpOnly: true });
@@ -156,4 +156,4 @@ router.get('/discordUser', checkAuthenticated, (req, res) => {
     res.json(req.cookies.serverDiscordUser);
 });
 
-module.exports = { router, checkAuthenticated };
+export default router;

@@ -1,18 +1,15 @@
-const express = require('express');
-const parseAndUpload = require('../services/fileParser');
-const { checkAuthenticated } = require('../routes/auth');
-const cookieParser = require('cookie-parser');
-const fileService = require('../services/fileService');
-const numberFromPSQL = require('../utils/conversions').default;
-const { getFullHostname } = require('../utils/hostname');
-const userModel = require('../models/userModel');
-
-require('dotenv').config();
-
 const router = express.Router();
 router.use(cookieParser());
 
-const rateLimit = require("express-rate-limit");
+import rateLimit from 'express-rate-limit';
+import express from 'express';
+import { parseAndUpload } from '../services/fileParser.js';
+import { checkAuthenticated } from '../routes/auth.js';
+import cookieParser from 'cookie-parser';
+import { getFileByHash, emitFileUploaded } from '../services/fileService.js';
+import { numberFromPSQL } from '../utils/conversions.js';
+import { getFullHostname } from '../utils/hostname.js';
+import { getUserById } from '../models/userModel.js';
 
 const uploadLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -37,7 +34,7 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
     }
     let user;
     try {
-        user = await userModel.getUserById(userId);
+        user = await getUserById(userId);
         if (!user) {
             console.log("User not found");
             return res.status(404).send("User not found");
@@ -48,13 +45,13 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
     }
 
     // Check if a file with the same hash already exists in this guild
-    fileService.getFileByHash(fileHash, guildId)
+    getFileByHash(fileHash, guildId)
         .then(async existingFile => {
             if (existingFile) {
                 // If the file already exists, return the original copy
                 const downloadLink = `${hostname}/download/${existingFile.fileid}`; // remember, no capitals here!
                 console.log("Existing download link: " + downloadLink);
-                fileService.emitFileUploaded(channelId, userId, isDM, existingFile.filename, fileSize, downloadLink);
+                emitFileUploaded(channelId, userId, isDM, existingFile.filename, fileSize, downloadLink);
                 return res.status(200).json({ message: 'File already exists', downloadLink: downloadLink });
             }
             else {
@@ -96,4 +93,4 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
 
 });
 
-module.exports = router;
+export default router;

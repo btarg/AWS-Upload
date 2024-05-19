@@ -1,43 +1,39 @@
-const path = require('path');
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const express = require('express');
-const session = require('express-session');
-const http = require('http');
+import express from 'express';
+import session from 'express-session';
+import http from 'http';
+import { initializeSocket } from './config/socket.js';
+import dotenv from 'dotenv';
+import authRoutes from './routes/auth.js';
+import uploadRoutes from './routes/upload.js';
+import deleteRoutes from './routes/delete.js';
+import downloadRoutes from './routes/download.js';
+import listRoutes from './routes/list.js';
+import discordRoutes from './routes/discord.js';
+import configRoutes from './routes/getconfig.js';
+
 const app = express();
 const server = http.createServer(app);
 
-// Make sure the socket.io socket is set up
-const { initializeSocket } = require('./config/socket');
 (async () => {
     await initializeSocket(server);
 })();
-
-const dotenv = require('dotenv');
-const { router: authRoutes } = require('./routes/auth');
-const uploadRoutes = require('./routes/upload');
-const deleteRoutes = require('./routes/delete');
-const downloadRoutes = require('./routes/download');
-const listRoutes = require('./routes/list');
-const discordRoutes = require('./routes/discord');
-const configRoutes = require('./routes/getconfig');
-
-// db init
-const { initializeDatabase } = require('./config/dbinit');
-initializeDatabase();
 
 dotenv.config();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
-    secret: process.env.SESSION_SECRET, // replace with your own secret key
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // set to true if your app is on https
+    cookie: { secure: false }
 }));
 
-
-app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
-
+app.use(express.static(join(__dirname, 'frontend', 'dist')));
 
 app.use('/auth', authRoutes);
 app.use('/putfile', uploadRoutes);

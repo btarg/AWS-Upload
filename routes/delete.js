@@ -1,14 +1,12 @@
-const express = require('express');
+import dotenv from 'dotenv';
+dotenv.config();
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { getFileById, deleteFileById } from '../services/fileService.js';
+import { checkAuthenticated } from './auth.js';
+import express from 'express';
 const router = express.Router();
-const cookieParser = require('cookie-parser');
+import cookieParser from 'cookie-parser';
 router.use(cookieParser());
-
-const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
-const fileService = require('../services/fileService');
-const { checkAuthenticated } = require('./auth');
-
-
-require('dotenv').config();
 
 const s3Client = new S3Client({ region: process.env.S3_REGION });
 
@@ -16,7 +14,7 @@ router.delete('/:id', checkAuthenticated, async (req, res) => {
     const fileId = req.params.id;
 
     // Get the file record from the database
-    const file = await fileService.getFileById(fileId);
+    const file = await getFileById(fileId);
     if (!file) {
         return res.status(404).send('File not found');
     }
@@ -43,7 +41,7 @@ router.delete('/:id', checkAuthenticated, async (req, res) => {
 
     // Delete the file record from the database
     try {
-        await fileService.deleteFile(fileId);
+        await deleteFileById(fileId);
     } catch (error) {
         console.error('Error deleting file record from database', error);
         return res.status(500).send('Error deleting file record from database');
@@ -52,4 +50,4 @@ router.delete('/:id', checkAuthenticated, async (req, res) => {
     res.status(200).send('File deleted successfully');
 });
 
-module.exports = router;
+export default router;

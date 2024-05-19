@@ -1,8 +1,10 @@
-const pool = require('../config/database');
-require("dotenv").config();
+import pool from '../config/database.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Create the users table if it doesn't exist
-const createUserTable = async () => {
+export const createUserTable = async () => {
     const defaultBytesAllowed = await getBytesAllowed(false);
 
     const query = `
@@ -18,7 +20,7 @@ const createUserTable = async () => {
 };
 
 // Get user by ID
-const getUserById = async (userId) => {
+export const getUserById = async (userId) => {
     const query = 'SELECT * FROM users WHERE id = $1';
     const { rows } = await pool.query(query, [userId]);
     if (rows.length > 0) {
@@ -36,7 +38,7 @@ const getUserById = async (userId) => {
     return { isPremium: false, premiumExpiry: null, bytesUsed: 0, bytesAllowed: bytesAllowed };
 };
 
-const getAllUsers = async () => {
+export const getAllUsers = async () => {
     const query = `
     SELECT * FROM users;
   `;
@@ -45,7 +47,7 @@ const getAllUsers = async () => {
     return rows;
 }
 
-const getBytesAllowed = async (premium) => {
+export const getBytesAllowed = async (premium) => {
     if (premium) {
         return (process.env.MB_ALLOWED_PREMIUM || 25000) * 1024 * 1024; // 100mb
     } else {
@@ -54,7 +56,7 @@ const getBytesAllowed = async (premium) => {
 };
 
 // Insert or update a user
-const upsertUserData = async (id, isPremium, premiumExpiry, bytesUsed) => {
+export const upsertUserData = async (id, isPremium, premiumExpiry, bytesUsed) => {
     const bytesAllowed = getBytesAllowed(isPremium);
     const user = {
         id,
@@ -67,7 +69,7 @@ const upsertUserData = async (id, isPremium, premiumExpiry, bytesUsed) => {
 };
 
 
-const upsertUser = async (user) => {
+export const upsertUser = async (user) => {
     const query = `
     INSERT INTO users (id, isPremium, premiumExpiry, bytesUsed)
     VALUES ($1, $2, $3, $4)
@@ -79,7 +81,7 @@ const upsertUser = async (user) => {
     await pool.query(query, [user.id, user.isPremium, user.premiumExpiry, user.bytesUsed]);
 };
 
-const addBytes = async (userId, bytes) => {
+export const addBytes = async (userId, bytes) => {
     const query = `
     UPDATE users
     SET bytesUsed = bytesUsed + $2
@@ -93,7 +95,7 @@ const addBytes = async (userId, bytes) => {
 };
 
 // Remove bytes from a user
-const removeBytes = async (userId, bytes) => {
+export const removeBytes = async (userId, bytes) => {
     const query = `
     UPDATE users
     SET bytesUsed = GREATEST(0, bytesUsed - $2)
@@ -104,14 +106,4 @@ const removeBytes = async (userId, bytes) => {
     } catch (error) {
         console.error('Error removing bytes used:', error);
     }
-};
-
-module.exports = {
-    createUserTable,
-    getUserById,
-    upsertUser,
-    upsertUserData,
-    getAllUsers,
-    addBytes,
-    removeBytes
 };
