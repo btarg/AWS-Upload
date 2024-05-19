@@ -1,10 +1,10 @@
 <script setup>
+import { onMounted } from 'vue';
 import Home from "./pages/Home.vue";
 import UploadPage from "./pages/UploadPage.vue";
 
 import { useAuthStore } from "./stores/authStore.js";
 const authStore = useAuthStore();
-authStore.updateLogin();
 
 var isUploadPage = false;
 const urlParams = new URLSearchParams(window.location.search);
@@ -18,6 +18,10 @@ if (urlParams.get("channel")) {
   isDM = urlParams.get("isDM");
   isUploadPage = true;
 }
+
+onMounted(async () => {
+  await authStore.updateLogin();
+});
 </script>
 
 <template>

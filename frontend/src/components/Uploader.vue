@@ -111,7 +111,7 @@ export default defineComponent({
       isUploading.value = false;
 
       // since we have added bytes, override the user cookie
-      authStore.updateDBUser(true);
+      await authStore.updateDBUser(true);
     }
 
     return {

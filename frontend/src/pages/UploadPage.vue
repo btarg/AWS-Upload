@@ -4,7 +4,7 @@
 
   <label v-if="authStore.loggedIn">{{
     authStore.discordUser ? authStore.discordUser.username : ""
-    }}</label>
+  }}</label>
 
   <GuildDropdown v-if="authStore.loggedIn" @guild-selected="handleGuildSelected" />
   <Uploader v-if="selectedGuildId && authStore.loggedIn" :selectedGuildId="selectedGuildId" />
@@ -26,12 +26,12 @@ const authStore = useAuthStore();
 const bytesUsed = ref("");
 const bytesAllowed = ref("");
 
-import { onBeforeUnmount } from "vue";
+import { onBeforeUnmount, nextTick } from "vue";
 
 let intervalId;
 
 onMounted(async () => {
-  updateUserData();
+  await updateUserData();
   intervalId = setInterval(updateUserData, 30000); // Refresh every 30 seconds
 });
 
@@ -39,11 +39,15 @@ onBeforeUnmount(() => {
   clearInterval(intervalId); // Clear the interval when the component is unmounted
 });
 
-function updateUserData() {
-  authStore.updateDBUser();
-  if (authStore.user) {
-    bytesUsed.value = prettyPrintBytes(authStore.user.bytesUsed);
-    bytesAllowed.value = prettyPrintBytes(authStore.user.bytesAllowed);
+async function updateUserData() {
+  try {
+    await authStore.updateDBUser();
+    if (authStore.user) {
+      bytesUsed.value = prettyPrintBytes(authStore.user.bytesUsed);
+      bytesAllowed.value = prettyPrintBytes(authStore.user.bytesAllowed);
+    }
+  } catch (error) {
+    console.error('Error updating user data:', error);
   }
 }
 </script>
