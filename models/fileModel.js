@@ -29,7 +29,10 @@ const insertFile = async (fileId, guildId, userId, filename, fileHash, uploadDat
 };
 
 // Get expired files
-const getExpiredFiles = async (currentDate) => {
+const getExpiredFiles = async () => {
+  const now = new Date();
+  const currentDate = now.toISOString();
+
   const query = 'SELECT * FROM files WHERE expiresAt <= $1';
   const { rows } = await pool.query(query, [currentDate]);
   return rows;

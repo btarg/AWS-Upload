@@ -4,16 +4,10 @@
 
   <label v-if="authStore.loggedIn">{{
     authStore.discordUser ? authStore.discordUser.username : ""
-  }}</label>
+    }}</label>
 
-  <GuildDropdown
-    v-if="authStore.loggedIn"
-    @guild-selected="handleGuildSelected"
-  />
-  <Uploader
-    v-if="selectedGuildId && authStore.loggedIn"
-    :selectedGuildId="selectedGuildId"
-  />
+  <GuildDropdown v-if="authStore.loggedIn" @guild-selected="handleGuildSelected" />
+  <Uploader v-if="selectedGuildId && authStore.loggedIn" :selectedGuildId="selectedGuildId" />
   <label v-if="selectedGuildId && authStore.loggedIn">
     Used:
     {{ bytesUsed }} /
@@ -46,7 +40,7 @@ onBeforeUnmount(() => {
 });
 
 function updateUserData() {
-  authStore.updateLogin();
+  authStore.updateDBUser();
   if (authStore.user) {
     bytesUsed.value = prettyPrintBytes(authStore.user.bytesUsed);
     bytesAllowed.value = prettyPrintBytes(authStore.user.bytesAllowed);
@@ -81,9 +75,11 @@ export default {
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
 }

@@ -10,7 +10,6 @@ router.post('/', async (req, res) => {
     console.log("Hit upload endpoint");
     try {
         const data = await parseAndUpload(req);
-        console.log("Got back data: " + data);
         // pass the data directly on success. the json should include downloadLink
         res.status(200).json(data);
     } catch (error) {

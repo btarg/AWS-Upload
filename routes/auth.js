@@ -10,7 +10,7 @@ router.use(cookieParser());
 
 const discordScope = ["identify", "guilds", "email"];
 
-// Middleware to check if the user is authenticated
+// Middleware to check if the user is authenticated with discord
 const checkAuthenticated = async (req, res, next) => {
     const discordUser = req.cookies.discordUser;
     if (discordUser && discordUser.id) {
@@ -121,8 +121,8 @@ router.get('/callback', async (req, res) => {
             await userModel.upsertUserData(oauthDiscordUser.id, false, null, 0);
         }
 
-
-        res.redirect(redirect); // Redirect to upload.html after successful login
+        // Redirect to the previous page which is saved in session
+        res.redirect(redirect); 
     } catch (error) {
         console.error('Error during OAuth callback', error);
         // Removed the line that sends a response before redirecting

@@ -1,12 +1,8 @@
 <template>
   <div>
     <input type="file" @change="handleFileUpload" />
-    <button
-      @click="uploadFile"
-      :disabled="
-        !selectedFile || uploadProgress.value > 0 || !authStore.loggedIn
-      "
-    >
+    <button @click="uploadFile"
+      :disabled="!selectedFile || (isUploading && isUploading.value) || uploadProgress.value > 0 || !authStore.loggedIn">
       Upload
     </button>
     <progress :value="uploadProgress" max="100"></progress>
@@ -28,6 +24,7 @@ export default defineComponent({
     const authStore = useAuthStore();
     const selectedFile = ref(null);
     const fileHash = ref(null);
+    const isUploading = ref(false);
     const uploadProgress = ref(0);
     const config = ref(null);
 
@@ -70,6 +67,7 @@ export default defineComponent({
     async function uploadFile() {
       if (
         !selectedFile.value ||
+        isUploading.value ||
         uploadProgress.value > 0 ||
         !authStore.loggedIn
       )
@@ -80,6 +78,7 @@ export default defineComponent({
         alert(`File size exceeds the limit of ${config.value.maxFileSize}MB`);
         return;
       }
+      isUploading.value = true;
 
       // only append the file to the form
       const urlParams = new URLSearchParams(window.location.search);
@@ -102,18 +101,17 @@ export default defineComponent({
       const result = await response.json();
 
       if (!result.error) {
-        uploadProgress.value = 0;
-
         const downloadLink = result.downloadLink;
         alert(`File uploaded successfully. Download link: ${downloadLink}`);
       } else {
         // alert the error
         alert(result.error.message);
       }
+      uploadProgress.value = 0;
+      isUploading.value = false;
 
-      // update the login cookies once we have finished, as we probably have added bytes
-      authStore.updateLogin();
-
+      // since we have added bytes, override the user cookie
+      authStore.updateDBUser(true);
     }
 
     return {

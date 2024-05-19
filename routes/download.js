@@ -3,7 +3,7 @@ const router = express.Router();
 require('dotenv').config();
 const pool = require('../config/database');
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
-const { createReadStream } = require('stream');
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const s3Client = new S3Client({ region: process.env.S3_REGION });
 
@@ -29,15 +29,13 @@ router.get('/:id', async (req, res) => {
 
     try {
         const command = new GetObjectCommand(params);
-        const response = await s3Client.send(command);
+        const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 21600 }); // Expires in 1 hour
 
-        res.setHeader('Content-Disposition', 'attachment; filename=' + file.filename);
-
-        response.Body.pipe(res); // Pipe the S3 object data directly to the response
+        res.redirect(signedUrl);
     } catch (error) {
-        console.error('Error downloading file', error);
+        console.error('Error generating signed URL', error);
         if (!res.headersSent) {
-            return res.status(500).send('Error downloading file');
+            return res.status(500).send('Error generating signed URL');
         }
     }
 });

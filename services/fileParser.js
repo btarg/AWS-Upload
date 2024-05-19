@@ -16,6 +16,7 @@ const { getIo } = require('../config/socket');
 const io = getIo();
 
 const { accessKeyId, secretAccessKey, region, Bucket } = require('../config/aws');
+const numberFromPSQL = require('../utils/conversions');
 
 const parseAndUpload = async (req) => {
     return new Promise(async (resolve, reject) => {
@@ -26,7 +27,7 @@ const parseAndUpload = async (req) => {
         }
 
         const fileHash = req.headers['filehash'];
-        const fileSize = req.headers['filesize'];
+        const fileSize = Number(req.headers['filesize']);
         const guildId = req.headers['guildid'];
         const channelId = req.headers['channelid'];
         const userId = req.headers['userid'];
@@ -73,6 +74,7 @@ const parseAndUpload = async (req) => {
         form.on('error', error => {
             console.log("Rejected with error: " + error.message);
             reject({ error: error.message, statusCode: 500 })
+            return;
         })
 
         form.on('progress', (bytesReceived, bytesExpected) => {
@@ -89,11 +91,9 @@ const parseAndUpload = async (req) => {
 
         form.on('fileBegin', (formName, file) => {
             originalFilename = file.originalFilename;
-
-            console.log("FILE SIZE IS " + fileSize);
             console.log(`S3 KEY IS ${guildId}/${userId}/${originalFilename}`);
 
-
+            let fileExists = false;
 
             // Check if a file with the same hash already exists in this guild
             fileService.getFileByHash(fileHash, guildId)
@@ -105,83 +105,98 @@ const parseAndUpload = async (req) => {
                         console.log("Existing download link: " + downloadLink);
                         fileService.emitFileUploaded(channelId, userId, isDM, existingFile.filename, downloadLink);
                         resolve({ message: 'File already exists', downloadLink: downloadLink });
+                        fileExists = true;
+                        return;
+                    } else {
+
+                        var bytesUsed = numberFromPSQL(user.bytesUsed);
+                        var bytesAllowed = numberFromPSQL(user.bytesAllowed);
+                        const bytesAboutToBeUsed = bytesUsed + fileSize;
+
+                        console.log("FILE SIZE IS " + fileSize);
+                        console.log("BYTES USED IS " + bytesUsed);
+                        console.log("BYTES ALLOWED IS " + bytesAllowed);
+
+                        console.log("Bytes used plus file size: " + bytesAboutToBeUsed);
+                        if (bytesAboutToBeUsed >= bytesAllowed) {
+                            console.log("User exceeded storage limit");
+                            reject({ error: 'User has exceeded their storage limit', statusCode: 403 });
+                            return;
+                        }
+
+                        file.open = async function () {
+                            this._writeStream = new Transform({
+                                transform(chunk, encoding, callback) {
+                                    callback(null, chunk)
+                                }
+                            })
+
+                            this._writeStream.on('error', e => {
+                                form.emit('error', e)
+                            });
+
+                            // upload to S3
+                            new Upload({
+                                client: new S3Client({
+                                    credentials: {
+                                        accessKeyId,
+                                        secretAccessKey
+                                    },
+                                    region
+                                }),
+                                params: {
+                                    Bucket,
+                                    Key: `${guildId}/${userId}/${originalFilename}`,
+                                    Body: this._writeStream
+                                },
+                                tags: [], // optional tags
+                                queueSize: 4, // optional concurrency configuration
+                                partSize: 1024 * 1024 * 5, // optional size of each part, in bytes, at least 5MB
+                                leavePartsOnError: false, // optional manually handle dropped parts
+                            }).done()
+                                .then(data => {
+                                    form.emit('data', { name: "complete", value: data });
+
+                                    // add bytes to user
+                                    userModel.addBytes(userId, fileSize);
+
+                                    const expirationDate = user.isPremium ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
+                                    fileModel.insertFile(fileId, guildId, userId, originalFilename, fileHash, new Date(), expirationDate)
+                                        .then(() => {
+                                            const downloadLink = `${hostname}/download/${fileId}`;
+
+                                            fileService.emitFileUploaded(channelId, userId, isDM, file.originalFilename, downloadLink);
+                                            console.log(`Finished uploading to AWS: ${file.originalFilename} to guild ${guildId}, channel ${channelId}, user ${userId}`);
+
+                                            resolve({ downloadLink: downloadLink });
+                                        })
+                                        .catch(error => {
+                                            console.error('Error inserting file:', error);
+                                            reject(error);
+                                        });
+
+                                }).catch((err) => {
+                                    form.emit('error', err);
+                                })
+                        }
+
+                        file.end = function (cb) {
+                            this._writeStream.on('finish', () => {
+                                this.emit('end')
+                                cb()
+                            })
+                            this._writeStream.end()
+                        }
+
                     }
                 })
                 .catch(error => {
                     console.error('Error getting file by hash:', error);
                     reject(error);
+                    return;
                 });
 
-            if ((user.bytesUsed + fileSize) >= user.bytesAllowed) {
-                console.log("User exceeded storage limit");
-                reject({ error: 'User has exceeded their storage limit', statusCode: 403 });
-            }
-
-            file.open = async function () {
-                console.log("file.open");
-                this._writeStream = new Transform({
-                    transform(chunk, encoding, callback) {
-                        callback(null, chunk)
-                    }
-                })
-
-                this._writeStream.on('error', e => {
-                    form.emit('error', e)
-                });
-
-                // upload to S3
-                new Upload({
-                    client: new S3Client({
-                        credentials: {
-                            accessKeyId,
-                            secretAccessKey
-                        },
-                        region
-                    }),
-                    params: {
-                        Bucket,
-                        Key: `${guildId}/${userId}/${originalFilename}`,
-                        Body: this._writeStream
-                    },
-                    tags: [], // optional tags
-                    queueSize: 4, // optional concurrency configuration
-                    partSize: 1024 * 1024 * 5, // optional size of each part, in bytes, at least 5MB
-                    leavePartsOnError: false, // optional manually handle dropped parts
-                }).done()
-                    .then(data => {
-                        form.emit('data', { name: "complete", value: data });
-
-                        // add bytes to user
-                        userModel.addBytes(userId, fileSize);
-
-                        const expirationDate = user.isPremium ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-
-                        fileModel.insertFile(fileId, guildId, userId, originalFilename, fileHash, new Date(), expirationDate)
-                            .then(() => {
-                                const downloadLink = `${hostname}/download/${fileId}`;
-
-                                fileService.emitFileUploaded(channelId, userId, isDM, file.originalFilename, downloadLink);
-                                console.log(`Uploaded file: ${file.originalFilename} to guild ${guildId}, channel ${channelId}, user ${userId}`);
-
-                                resolve({ downloadLink: downloadLink });
-                            })
-                            .catch(error => {
-                                console.error('Error inserting file:', error);
-                                reject(error);
-                            });
-
-                    }).catch((err) => {
-                        form.emit('error', err);
-                    })
-            }
-
-            file.end = function (cb) {
-                this._writeStream.on('finish', () => {
-                    this.emit('end')
-                    cb()
-                })
-                this._writeStream.end()
-            }
         })
     })
 }
