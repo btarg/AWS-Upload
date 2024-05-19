@@ -56,17 +56,9 @@ client.on('interactionCreate', async (interaction) => {
             isDM = true;
         }
 
-        createUploadLink(interaction.guild.id, finalChannel, interaction.user.id, isDM)
-            .then((link) => {
-                //TODO: generate proper message content
-                // ephemerally reply with the link
-                interaction.reply({ content: link, ephemeral: true });
+        const link = createUploadLink(interaction.guild.id, finalChannel, interaction.user.id, isDM);
+        interaction.reply({ content: link, ephemeral: true });
 
-            })
-            .catch((error) => {
-                console.error('Error generating link:', error);
-                interaction.reply('Failed to generate link');
-            });
     } else if (commandName === 'searchfile') {
         const filename = interaction.options.getString('filename');
         console.log("Searching for file: " + filename);

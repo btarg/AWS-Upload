@@ -8,10 +8,8 @@ function generateId() {
 }
 
 function createUploadLink(guildId, channelId, userId, isDM = false) {
-    return new Promise((resolve, reject) => {
-        const hostname = getFullHostname(process.env.HOSTNAME || "localhost")
-        resolve(`${hostname}/?guild=${guildId}&channel=${channelId}&isDM=${isDM}`);
-    });
+    const hostname = getFullHostname(process.env.HOSTNAME || "localhost");
+    return `${hostname}/?guild=${guildId}&channel=${channelId}&isDM=${isDM}`;
 }
 
 module.exports = { createUploadLink, generateId };
