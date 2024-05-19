@@ -1,6 +1,4 @@
 export function prettyPrintBytes(bytes) {
-    console.log("bytes to pretty print: " + bytes);
-
     // Convert string to BigInt
     if (typeof bytes === 'string') {
         bytes = BigInt(bytes);

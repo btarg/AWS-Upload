@@ -30,7 +30,7 @@ router.get('/:id', async (req, res) => {
     try {
         const command = new GetObjectCommand(params);
         const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 21600 }); // Expires in 1 hour
-
+        console.log("Signed S3 URL: " + signedUrl);
         res.redirect(signedUrl);
     } catch (error) {
         console.error('Error generating signed URL', error);

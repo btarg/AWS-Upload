@@ -13,8 +13,6 @@ require('dotenv').config();
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-    console.log("Hit upload endpoint");
-
     // these are the same headers that will be passed to the parser
     const fileHash = req.headers['filehash'];
     const fileSize = Number(req.headers['filesize']);

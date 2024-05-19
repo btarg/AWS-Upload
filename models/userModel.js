@@ -87,7 +87,6 @@ const addBytes = async (userId, bytes) => {
   `;
     try {
         const result = await pool.query(query, [userId, bytes]);
-        console.log(result.rowCount); // This will log the number of rows updated
     } catch (error) {
         console.error('Error updating bytesUsed:', error);
     }

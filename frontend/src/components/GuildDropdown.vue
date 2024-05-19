@@ -53,7 +53,6 @@ export default {
 
     const emitSelectedGuild = () => {
       nextTick(() => {
-        console.log("Emitting guild-selected", selectedGuildId.value);
         context.emit("guild-selected", selectedGuildId.value);
       });
     };

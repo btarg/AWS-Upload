@@ -72,7 +72,6 @@ client.on('interactionCreate', async (interaction) => {
         console.log("Searching for file: " + filename);
         searchFile(interaction.guild.id, interaction.user.id, filename)
             .then((file) => {
-                console.log(file[0]);
                 // Reply with the file details or a message saying the file was found
                 const hostname = getFullHostname(process.env.HOSTNAME || "localhost");
                 const downloadLink = `${hostname}/download/${file[0].fileid}`;
