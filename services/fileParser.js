@@ -31,14 +31,7 @@ const parseAndUpload = async (req, user) => {
         const form = formidable(options);
 
         const hostname = getFullHostname(req.hostname);
-        let fileId = req.session.linkId;
-        if (!fileId || !isLinkValid(fileId)) {
-            console.log('Invalid link ID, generating new one');
-            fileId = generateId();
-            req.session.linkId = fileId;
-        } else {
-            fileService.invalidateLink(fileId);
-        }
+        const fileId = generateId();
 
         // this will be set later
         let originalFilename;

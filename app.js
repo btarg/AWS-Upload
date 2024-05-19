@@ -19,7 +19,6 @@ const deleteRoutes = require('./routes/delete');
 const downloadRoutes = require('./routes/download');
 const listRoutes = require('./routes/list');
 const discordRoutes = require('./routes/discord');
-const { router: newRoutes } = require('./routes/linkgenerator');
 const configRoutes = require('./routes/getconfig');
 
 // db init
@@ -46,7 +45,6 @@ app.use('/delete', deleteRoutes);
 app.use('/download', downloadRoutes);
 app.use('/list', listRoutes);
 app.use('/discord', discordRoutes);
-app.use('/new', newRoutes);
 app.use('/config', configRoutes);
 
 const PORT = process.env.PORT || 3000;

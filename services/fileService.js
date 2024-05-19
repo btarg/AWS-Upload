@@ -2,9 +2,6 @@
 const fileModel = require('../models/fileModel');
 const userModel = require('../models/userModel');
 
-// get link map from new.js
-const { invalidateLink } = require('../routes/linkgenerator');
-
 const events = require('events');
 const pool = require('../config/database');
 
@@ -78,6 +75,5 @@ module.exports = {
     isFileIdUsed,
     eventEmitter,
     emitFileUploaded,
-    invalidateLink,
     searchFile
 };
