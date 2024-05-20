@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import https from 'https';
-import { client } from '../discordbot.js';
+import { client } from '../services/discordbot.js';
 import { checkAuthenticated } from "./auth.js";
 
 import cookieParser from 'cookie-parser';
