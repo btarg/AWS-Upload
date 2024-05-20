@@ -16,7 +16,9 @@ export const checkAuthenticated = async (req, res, next) => {
         if (discordUser && discordUser.id) {
             next();
         } else {
-            throw new Error('Not authenticated');
+            // don't "throw" here, just send a response
+            res.status(401).send('Not authenticated');
+            return;
         }
     } catch (error) {
         console.error('Error checking authentication', error);
@@ -26,10 +28,14 @@ export const checkAuthenticated = async (req, res, next) => {
 
 router.get('/logout', (req, res) => {
 
-    // remove cookie
+    // remove cookies including serverside ones
     res.clearCookie('user');
     res.clearCookie('discordUser')
+    res.clearCookie('serverUser');
+    res.clearCookie('serverDiscordUser')
+
     res.clearCookie('refreshToken');
+    res.clearCookie('accessToken');
 
     req.session.destroy((err) => {
         if (err) {
@@ -65,9 +71,10 @@ router.get('/refresh', checkAuthenticated, async (req, res) => {
             scope: discordScope
         });
 
-        req.session.accessToken = newToken.access_token;
+        //req.session.accessToken = newToken.access_token;
         console.log("New refresh token:", newToken.refresh_token);
         res.cookie('refreshToken', newToken.refresh_token);
+        res.cookie('accessToken', newToken.access_token);
 
         const oauthDiscordUser = await oauth.getUser(newToken.access_token);
         res.cookie('serverDiscordUser', oauthDiscordUser, { httpOnly: true });
@@ -115,10 +122,12 @@ router.get('/callback', async (req, res) => {
         if (!oauthDiscordUser.verified) {
             throw new Error("User is not verified");
         }
-        req.session.accessToken = token.access_token;
+        //req.session.accessToken = token.access_token;
         res.cookie('serverDiscordUser', oauthDiscordUser, { httpOnly: true });
-        res.cookie('refreshToken', token.refresh_token);
         res.cookie('discordUser', oauthDiscordUser);
+
+        res.cookie('refreshToken', token.refresh_token);
+        res.cookie('accessToken', token.access_token);
 
         // Save the user data to the database if they are not already present
         const existingUser = await getUserById(oauthDiscordUser.id);

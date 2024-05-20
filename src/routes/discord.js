@@ -9,7 +9,7 @@ import cookieParser from 'cookie-parser';
 router.use(cookieParser());
 
 router.get('/guilds', checkAuthenticated, (req, res) => {
-    if (!req.session || !req.session.accessToken) {
+    if (!req.session || !req.cookies.accessToken) {
         console.error('/guilds: Not authenticated');
         return res.status(401).json({ error: 'Not authenticated' });
     }
@@ -18,7 +18,7 @@ router.get('/guilds', checkAuthenticated, (req, res) => {
         path: '/api/users/@me/guilds',
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + req.session.accessToken
+            'Authorization': 'Bearer ' + req.cookies.accessToken
         }
     };
 
@@ -33,6 +33,12 @@ router.get('/guilds', checkAuthenticated, (req, res) => {
             const body = JSON.parse(data);
             if (body.error) {
                 throw new Error(body.error);
+            }
+
+            // Check if body is an array
+            if (!Array.isArray(body)) {
+                console.error('Error: body is not an array', body);
+                return res.status(500).json({ error: 'Failed to fetch guilds' });
             }
 
             // Filter the guilds by only ones that the bot is a member of
@@ -56,7 +62,7 @@ router.get('/user', checkAuthenticated, (req, res) => {
         path: '/api/users/@me',
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + req.session.accessToken
+            'Authorization': 'Bearer ' + req.cookies.accessToken
         }
     };
 
