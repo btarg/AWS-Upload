@@ -6,7 +6,6 @@ export const createFileTable = async () => {
     CREATE TABLE IF NOT EXISTS files (
       id SERIAL PRIMARY KEY,
       fileId VARCHAR(255) NOT NULL,
-      guildId VARCHAR(255) NOT NULL,
       userId VARCHAR(255) NOT NULL,
       filename VARCHAR(255) NOT NULL,
       fileHash VARCHAR(255) NOT NULL,
@@ -19,13 +18,18 @@ export const createFileTable = async () => {
 };
 
 // Insert a new file record and return its ID
-export const insertFile = async (fileId, guildId, userId, filename, fileHash, fileSize, uploadDate, expiresAt) => {
+export const insertFile = async (fileId, userId, filename, fileHash, fileSize, uploadDate, expiresAt) => {
   const query = `
-    INSERT INTO files (fileId, guildId, userId, filename, fileHash, fileSize, uploadDate, expiresAt)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    INSERT INTO files (fileId, userId, filename, fileHash, fileSize, uploadDate, expiresAt)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING fileId
   `;
-  const result = await pool.query(query, [fileId, guildId, userId, filename, fileHash, fileSize, uploadDate, expiresAt]);
+
+  // Convert dates to ISO 8601 strings
+  const uploadDateISO = uploadDate.toISOString();
+  const expiresAtISO = expiresAt.toISOString();
+
+  const result = await pool.query(query, [fileId, userId, filename, fileHash, fileSize, uploadDateISO, expiresAtISO]);
   return result.rows[0].fileId;
 };
 

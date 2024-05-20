@@ -26,10 +26,10 @@ router.delete('/:id', checkAuthenticated, async (req, res) => {
     }
 
     // Delete the file from S3
-    const key = `${file.guildid}/${file.userid}/${file.fileid}`;
+    const s3key = `${file.userid}/${file.fileid}`;
     const params = {
         Bucket: process.env.S3_BUCKET_NAME,
-        Key: key
+        Key: s3key
     };
     const command = new DeleteObjectCommand(params);
     try {

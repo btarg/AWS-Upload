@@ -13,7 +13,7 @@ import { getIo } from '../config/socket.js';
 
 dotenv.config();
 
-export const parseAndUpload = async (req, user) => {
+export const parseAndUpload = async (req, dbUser, discordUserData) => {
     return new Promise(async (resolve, reject) => {
         let options = {
             maxFileSize: (process.env.MB_MAX || 100) * 1024 * 1024, //100 megabytes converted to bytes,
@@ -25,11 +25,10 @@ export const parseAndUpload = async (req, user) => {
 
         const fileHash = req.headers['filehash'];
         const fileSize = Number(req.headers['filesize']);
-        const guildId = req.headers['guildid'];
         const channelId = req.headers['channelid'];
         const isDM = req.headers['isdm'];
 
-        const userId = user.id;
+        const userId = discordUserData.id;
 
         const form = formidable(options);
 
@@ -68,7 +67,6 @@ export const parseAndUpload = async (req, user) => {
 
         form.on('fileBegin', (formName, file) => {
             originalFilename = file.originalFilename;
-            console.log(`S3 KEY IS ${guildId}/${userId}/${originalFilename}`);
 
             file.open = async function () {
                 this._writeStream = new Transform({
@@ -93,7 +91,7 @@ export const parseAndUpload = async (req, user) => {
                     }),
                     params: {
                         Bucket,
-                        Key: `${guildId}/${userId}/${fileId}`,
+                        Key: `${userId}/${fileId}`,
                         Body: this._writeStream,
                         ContentDisposition: `attachment; filename="${originalFilename}"`
                     },
@@ -108,14 +106,14 @@ export const parseAndUpload = async (req, user) => {
                         // add bytes to user
                         addBytes(userId, fileSize);
 
-                        const expirationDate = user.isPremium ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+                        const expirationDate = dbUser.isPremium ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
-                        insertFile(fileId, guildId, userId, originalFilename, fileHash, fileSize, new Date(), expirationDate)
+                        insertFile(fileId, userId, originalFilename, fileHash, fileSize, new Date(), expirationDate)
                             .then(() => {
                                 const downloadLink = `${hostname}/download/${fileId}`;
 
-                                emitFileUploaded(channelId, userId, isDM, file.originalFilename, fileSize, downloadLink);
-                                console.log(`Finished uploading to AWS: ${file.originalFilename} to guild ${guildId}, channel ${channelId}, user ${userId}`);
+                                emitFileUploaded(channelId, discordUserData, isDM, file.originalFilename, fileSize, expirationDate, downloadLink);
+                                console.log(`Finished uploading to AWS: ${file.originalFilename}, user ${userId}`);
 
                                 resolve({ downloadLink: downloadLink });
                             })

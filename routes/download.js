@@ -27,7 +27,7 @@ router.get('/:id', limiter, async (req, res) => {
         return res.status(404).send('File not found');
     }
 
-    const s3key = `${file.guildid}/${file.userid}/${file.fileid}`;
+    const s3key = `${file.userid}/${file.fileid}`;
     console.log('Downloading file:', s3key);
 
     const params = {

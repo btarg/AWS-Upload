@@ -15,35 +15,39 @@ import downloadRoutes from './routes/download.js';
 import listRoutes from './routes/list.js';
 import discordRoutes from './routes/discord.js';
 import configRoutes from './routes/getconfig.js';
-
-const app = express();
-const server = http.createServer(app);
+import { initializeDatabase } from './config/dbinit.js';
 
 (async () => {
+
+    const app = express();
+    const server = http.createServer(app);
     await initializeSocket(server);
+    await initializeDatabase();
+
+    dotenv.config();
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+    app.use(session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: true,
+        cookie: { secure: false }
+    }));
+
+    app.use(express.static(join(__dirname, 'frontend', 'dist')));
+
+    app.use('/auth', authRoutes);
+    app.use('/putfile', uploadRoutes);
+    app.use('/delete', deleteRoutes);
+    app.use('/download', downloadRoutes);
+    app.use('/list', listRoutes);
+    app.use('/discord', discordRoutes);
+    app.use('/config', configRoutes);
+
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, () => {
+        console.log(`Server started on http://localhost:${PORT}`);
+    });
+
 })();
 
-dotenv.config();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
-}));
-
-app.use(express.static(join(__dirname, 'frontend', 'dist')));
-
-app.use('/auth', authRoutes);
-app.use('/putfile', uploadRoutes);
-app.use('/delete', deleteRoutes);
-app.use('/download', downloadRoutes);
-app.use('/list', listRoutes);
-app.use('/discord', discordRoutes);
-app.use('/config', configRoutes);
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server started on http://localhost:${PORT}`);
-});

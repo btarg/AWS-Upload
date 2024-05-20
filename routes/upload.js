@@ -21,7 +21,7 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
     // these are the same headers that will be passed to the parser
     const fileHash = req.headers['filehash'];
     const fileSize = Number(req.headers['filesize']);
-    const guildId = req.headers['guildid'];
+    // const guildId = req.headers['guildid'];
     const channelId = req.headers['channelid'];
     const isDM = req.headers['isdm'];
 
@@ -46,13 +46,13 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
     }
 
     // Check if a file with the same hash already exists in this guild
-    getFileByHash(fileHash, guildId)
+    getFileByHash(fileHash)
         .then(async existingFile => {
             if (existingFile) {
                 // If the file already exists, return the original copy
-                const downloadLink = `${hostname}/download/${existingFile.fileid}`; // remember, no capitals here!
+                const downloadLink = `${hostname}/download/${existingFile.fileid}`; // remember, no capitals here
                 console.log("Existing download link: " + downloadLink);
-                emitFileUploaded(channelId, discordUserData, isDM, existingFile.filename, fileSize, downloadLink);
+                emitFileUploaded(channelId, discordUserData, isDM, existingFile.filename, fileSize, existingFile.expiresat, downloadLink);
                 return res.status(200).json({ message: 'File already exists', downloadLink: downloadLink });
             }
             else {
@@ -72,7 +72,7 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
                 }
 
                 try {
-                    const data = await parseAndUpload(req, dbUser);
+                    const data = await parseAndUpload(req, dbUser, discordUserData);
                     // pass the data directly on success. the json should include downloadLink
                     return res.status(200).json(data);
                 } catch (error) {

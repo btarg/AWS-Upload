@@ -1,5 +1,5 @@
-import { createFileTable } from '../models/fileModel';
-import { createUserTable } from '../models/userModel';
+import { createFileTable } from '../models/fileModel.js';
+import { createUserTable } from '../models/userModel.js';
 
 export const initializeDatabase = async () => {
     try {
