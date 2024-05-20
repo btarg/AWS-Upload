@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { getFullHostname } from '../utils/hostname.js';
+import { getFullHostname } from '../utils/urls.js';
 
 // Function to generate a unique ID 11 characters url safe
 export function generateId() {

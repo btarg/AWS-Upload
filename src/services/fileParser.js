@@ -8,7 +8,7 @@ import { emitFileUploaded } from '../services/fileService.js';
 import { addBytes } from '../models/userModel.js';
 import { insertFile } from '../models/fileModel.js';
 import { generateId } from '../routes/linkgenerator.js';
-import { getFullHostname } from '../utils/hostname.js';
+import { getFullHostname } from '../utils/urls.js';
 import { getIo } from '../config/socket.js';
 
 dotenv.config();

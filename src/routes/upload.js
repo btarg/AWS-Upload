@@ -8,7 +8,7 @@ import { checkAuthenticated } from '../routes/auth.js';
 import cookieParser from 'cookie-parser';
 import { getFileByHash, emitFileUploaded } from '../services/fileService.js';
 import { numberFromPSQL } from '../utils/conversions.js';
-import { getFullHostname } from '../utils/hostname.js';
+import { getFullHostname } from '../utils/urls.js';
 import { getUserById } from '../models/userModel.js';
 
 const uploadLimiter = rateLimit({

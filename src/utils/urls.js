@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import https from 'https';
 dotenv.config();
 
 export function getFullHostname(hostname) {
@@ -13,4 +14,14 @@ export function getFullHostname(hostname) {
         hostname = `${hostname}:${process.env.PORT || 3000}`;
     }
     return hostname;
+}
+
+export function isValidUrl(url) {
+    return new Promise((resolve) => {
+        https.get(url, (res) => {
+            resolve(res.statusCode === 200);
+        }).on('error', (err) => {
+            resolve(false);
+        });
+    });
 }
