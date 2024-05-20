@@ -93,7 +93,7 @@ eventEmitter.on('fileUploaded', async (eventData) => {
     const displayName = userData.global_name;
     const expirationDateString = dateToString(expirationDate);
 
-    const friendlyName = await getFriendlyFileType(fileName);
+    const filetype = await getFriendlyFileType(fileName);
     const fileThumbnail = await getThumbnailUrl(fileName);
 
     let avatarURL = "";
@@ -122,7 +122,7 @@ eventEmitter.on('fileUploaded', async (eventData) => {
         .addFields(
             {
                 name: "📁 File type",
-                value: "`" + friendlyName + "`",
+                value: "`" + filetype.friendlyName + "`",
                 inline: true
             },
             {

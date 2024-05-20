@@ -35,8 +35,6 @@ import { getFullHostname } from './utils/urls.js';
         cookie: { secure: isHttps }
     }));
 
-    app.use(express.static(join(__dirname, 'frontend', 'dist')));
-
     app.use('/auth', authRoutes);
     app.use('/putfile', uploadRoutes);
     app.use('/delete', deleteRoutes);
@@ -44,6 +42,11 @@ import { getFullHostname } from './utils/urls.js';
     app.use('/list', listRoutes);
     app.use('/discord', discordRoutes);
     app.use('/config', configRoutes);
+
+    app.use(express.static(join(__dirname, 'frontend', 'dist')));
+    app.get('*', (req, res) => {
+        res.sendFile(join(__dirname, 'frontend', 'dist', 'index.html'));
+    });
 
     const PORT = process.env.PORT || 3000;
     const hostname = getFullHostname();

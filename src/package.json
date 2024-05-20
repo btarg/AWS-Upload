@@ -27,6 +27,7 @@
     "friendly-mimes": "^2.0.0",
     "pg": "^8.11.5",
     "pretty-bytes": "^6.1.1",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "vue-router": "^4.3.2"
   }
 }

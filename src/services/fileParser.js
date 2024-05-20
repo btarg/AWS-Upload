@@ -93,7 +93,7 @@ export const parseAndUpload = async (req, dbUser, discordUserData) => {
                         Bucket,
                         Key: `${userId}/${fileId}`,
                         Body: this._writeStream,
-                        ContentDisposition: `attachment; filename="${originalFilename}"`
+                        ContentDisposition: `inline; filename="${originalFilename}"`
                     },
                     tags: [], // optional tags
                     queueSize: 4, // optional concurrency configuration

@@ -2,14 +2,16 @@ import express from 'express';
 const router = express.Router();
 import dotenv from 'dotenv';
 dotenv.config();
-import pool from '../config/database.js';
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import rateLimit from "express-rate-limit";
 
+import { getFileById } from '../services/fileService.js';
 import { getFriendlyFileType, getThumbnailUrl } from '../utils/files.js';
 
 const s3Client = new S3Client({ region: process.env.S3_REGION });
+
+const urlCache = new Map();
 
 // Enable rate limiting
 const limiter = rateLimit({
@@ -18,57 +20,81 @@ const limiter = rateLimit({
     message: "Too many requests, please try again later."
 });
 
-router.get('/:id', limiter, async (req, res) => {
-    const fileId = req.params.id;
+export async function getS3URL(userId, fileId, expiresInSeconds = 7200) {
+    try {
+        const s3key = `${userId}/${fileId}`;
+        const command = new GetObjectCommand({
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: s3key
+        });
 
-    const result = await pool.query('SELECT * FROM files WHERE fileId = $1', [fileId]);
-    console.log(result);
-    const file = result.rows[0];
+        let signedUrl = urlCache.get(fileId);
+        if (!signedUrl) {
+            console.log(`URL for file ${fileId} not in cache, generating new link`);
+            signedUrl = await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
+            urlCache.set(fileId, signedUrl);
 
-    if (!file || result.length === 0) {
-        return res.status(404).send('File not found');
+            // Automatically remove the URL from the cache just before it expires
+            setTimeout(() => {
+                urlCache.delete(fileId);
+            }, (expiresInSeconds - 10) * 1000); // convert it to milliseconds for timeout
+        } else {
+            console.log(`Using cached URL for ${fileId}`);
+        }
+        return signedUrl;
+    } catch (error) {
+        console.error(`Error generating signed URL for file ${file.id}:`, error);
+        throw error; // re-throw the error so it can be handled by the caller
     }
+}
 
-    const s3key = `${file.userid}/${file.fileid}`;
-    console.log('Downloading file:', s3key);
-
-    const params = {
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: s3key
-    };
+router.get('/:id', limiter, async (req, res) => {
 
     try {
-        const command = new GetObjectCommand(params);
-
-        const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 600 });
-        console.log("Signed S3 URL: " + signedUrl);
-
-        const friendlyFileType = getFriendlyFileType(file.filename);
+        const fileId = req.params.id;
+        const file = await getFileById(fileId); 
+        const signedUrl = await getS3URL(file.userid, fileId);
+        const friendlyFileType = await getFriendlyFileType(file.filename);
         const thumbnail = await getThumbnailUrl(file.filename);
 
-        // Create an HTML response with OpenGraph meta tags
         const html = `
             <!DOCTYPE html>
             <html>
             <head>
                 <title>${file.filename}</title>
                 <meta property="og:title" content="${file.filename}" />
-                <meta property="og:description" content="File size: ${file.size}, File type: ${friendlyFileType}" />
+                <meta property="og:site_name" content="${process.env.SITE_NAME}">
+                <meta property="og:description" content="File size: ${file.filesize}, File type: ${friendlyFileType.friendlyName}" />
                 <meta property="og:url" content="${signedUrl}" />
                 <meta property="og:type" content="website" />
                 <meta property="og:image" content="${thumbnail}" />
-                <meta http-equiv="refresh" content="0; url=${signedUrl}" />
+                <meta name="twitter:card" content="summary_large_image">
+                <meta name="twitter:title" content="${file.filename}">
+                <meta name="twitter:description" content="File size: ${file.filesize}, File type: ${friendlyFileType.friendlyName}">
+                <meta name="twitter:image" content="${thumbnail}">
+                <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+                <style>
+                    html, body {
+                        height: 100%;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    #my-video {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                    }
+                </style>
             </head>
             <body>
-                <h1>${file.filename}</h1>
-                <p>File size: ${file.size}</p>
-                <p>File type: ${friendlyFileType}</p>
-                <a href="${signedUrl}">Download file</a>
+                ${friendlyFileType.mime.startsWith('video/') ? `<video id="my-video" class="video-js" controls preload="auto" data-setup="{}"><source src="${signedUrl}" type="${friendlyFileType.mime}">Your browser does not support the video tag.</video><script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script><script>var player = videojs('my-video');</script>` : ''}
             </body>
             </html>
         `;
 
-        res.send(html);
+        res.status(200).contentType('text/html').send(html);
     } catch (error) {
         console.error('Error generating signed URL', error);
         if (!res.headersSent) {
