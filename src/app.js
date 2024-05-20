@@ -16,22 +16,23 @@ import listRoutes from './routes/list.js';
 import discordRoutes from './routes/discord.js';
 import configRoutes from './routes/getconfig.js';
 import { initializeDatabase } from './config/dbinit.js';
+import { getFullHostname } from './utils/urls.js';
 
 (async () => {
-
+    dotenv.config();
     const app = express();
     const server = http.createServer(app);
     await initializeSocket(server);
     await initializeDatabase();
-
-    dotenv.config();
+    app.set('trust proxy', 1);
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
+    const isHttps = (process.env.HTTPS === 'true');
     app.use(session({
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: true,
-        cookie: { secure: false }
+        cookie: { secure: isHttps }
     }));
 
     app.use(express.static(join(__dirname, 'frontend', 'dist')));
@@ -45,8 +46,9 @@ import { initializeDatabase } from './config/dbinit.js';
     app.use('/config', configRoutes);
 
     const PORT = process.env.PORT || 3000;
+    const hostname = getFullHostname();
     server.listen(PORT, () => {
-        console.log(`Server started on http://localhost:${PORT}`);
+        console.log(`Server started at ${hostname}`);
     });
 
 })();

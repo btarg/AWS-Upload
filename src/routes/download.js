@@ -7,6 +7,8 @@ import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import rateLimit from "express-rate-limit";
 
+import { getFriendlyFileType, getThumbnailUrl } from '../utils/files.js';
+
 const s3Client = new S3Client({ region: process.env.S3_REGION });
 
 // Enable rate limiting
@@ -37,9 +39,36 @@ router.get('/:id', limiter, async (req, res) => {
 
     try {
         const command = new GetObjectCommand(params);
+
         const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 600 });
         console.log("Signed S3 URL: " + signedUrl);
-        res.redirect(signedUrl);
+
+        const friendlyFileType = getFriendlyFileType(file.filename);
+        const thumbnail = await getThumbnailUrl(file.filename);
+
+        // Create an HTML response with OpenGraph meta tags
+        const html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${file.filename}</title>
+                <meta property="og:title" content="${file.filename}" />
+                <meta property="og:description" content="File size: ${file.size}, File type: ${friendlyFileType}" />
+                <meta property="og:url" content="${signedUrl}" />
+                <meta property="og:type" content="website" />
+                <meta property="og:image" content="${thumbnail}" />
+                <meta http-equiv="refresh" content="0; url=${signedUrl}" />
+            </head>
+            <body>
+                <h1>${file.filename}</h1>
+                <p>File size: ${file.size}</p>
+                <p>File type: ${friendlyFileType}</p>
+                <a href="${signedUrl}">Download file</a>
+            </body>
+            </html>
+        `;
+
+        res.send(html);
     } catch (error) {
         console.error('Error generating signed URL', error);
         if (!res.headersSent) {

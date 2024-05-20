@@ -26,8 +26,8 @@ export const insertFile = async (fileId, userId, filename, fileHash, fileSize, u
   `;
 
   // Convert dates to ISO 8601 strings
-  const uploadDateISO = uploadDate.toISOString();
-  const expiresAtISO = expiresAt.toISOString();
+  const uploadDateISO = uploadDate ? uploadDate.toISOString() : null;
+  const expiresAtISO = expiresAt ? expiresAt.toISOString() : null;
 
   const result = await pool.query(query, [fileId, userId, filename, fileHash, fileSize, uploadDateISO, expiresAtISO]);
   return result.rows[0].fileId;

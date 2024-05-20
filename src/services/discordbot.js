@@ -9,9 +9,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 import { createUploadLink } from '../routes/linkgenerator.js';
 import { eventEmitter, searchFile } from '../services/fileService.js';
-import { getFullHostname, isValidUrl } from '../utils/urls.js';
+import { getFullHostname } from '../utils/urls.js';
 import { dateToString } from '../utils/dates.js';
-import { resolveFileType } from 'friendly-mimes';
+import { getFriendlyFileType, getThumbnailUrl } from '../utils/files.js';
 import prettyBytes from 'pretty-bytes';
 
 
@@ -81,7 +81,7 @@ client.on('interactionCreate', async (interaction) => {
 });
 
 
-eventEmitter.on('fileUploaded', (eventData) => {
+eventEmitter.on('fileUploaded', async (eventData) => {
     const { channelId, userData, isDM, fileName, fileSize, expirationDate, downloadLink } = eventData;
 
     const channel = client.channels.cache.get(channelId);
@@ -93,83 +93,70 @@ eventEmitter.on('fileUploaded', (eventData) => {
     const displayName = userData.global_name;
     const expirationDateString = dateToString(expirationDate);
 
-    const ext = fileName
-        .split('.')
-        .filter(Boolean) // removes empty extensions (e.g. `filename...txt`)
-        .slice(1)
-        .join('.')
-    const fileMime = resolveFileType("." + ext); // get friendly mime data
-    const friendlyName = fileMime.name ? fileMime.name : fileMime.mime;
+    const friendlyName = await getFriendlyFileType(fileName);
+    const fileThumbnail = await getThumbnailUrl(fileName);
 
-    const thumbnailUrlBase = "https://raw.githubusercontent.com/redbooth/free-file-icons/master/512px";
-    isValidUrl(`${thumbnailUrlBase}/${ext}.png`)
-        .then(isValid => {
-            const fileThumbnail = isValid ? `${thumbnailUrlBase}/${ext}.png` : `${thumbnailUrlBase}/_page.png`;
+    let avatarURL = "";
+    if (userData) {
+        // get avatar url from the hash on userData
+        const avatarHash = userData.avatar;
+        const userId = userData.id;
+        if (avatarHash) {
+            avatarURL = `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png`;
+        } else {
+            // default avatar if user has no avatar
+            avatarURL = `https://cdn.discordapp.com/embed/avatars/${userId % 5}.png`;
+        }
+    } else {
+        console.log('User not found');
+        return;
+    }
+    const embed = new EmbedBuilder()
+        .setAuthor({
+            name: `${displayName} uploaded a file:`, // use the displayName instead of user.username
+            url: downloadLink,
+            iconURL: avatarURL
+        })
+        .setTitle(fileName)
+        .setURL(downloadLink)
+        .addFields(
+            {
+                name: "📁 File type",
+                value: "`" + friendlyName + "`",
+                inline: true
+            },
+            {
+                name: "📊 File size",
+                value: "`" + prettyBytes(fileSize) + "`",
+                inline: true
+            },
+            {
+                name: "📅 Expires at",
+                value: "`" + expirationDateString + "`",
+                inline: true
+            },
+            {
+                name: "__Actions__",
+                value: `🦠 [**Check on VirusTotal**](https://hello.com)\n🚩 [**Report file**](https://world.com)`,
+                inline: false
+            },
+        )
+        .setThumbnail(fileThumbnail) // TODO: thumbnail based on filetype
+        .setColor(userData.accent_color.toString(16).padStart(6, '0'))
+        .setFooter({
+            text: displayName,
+            iconURL: avatarURL,
+        })
+        .setTimestamp();
 
-            let avatarURL = "";
-            if (userData) {
-                // get avatar url from the hash on userData
-                const avatarHash = userData.avatar;
-                const userId = userData.id;
-                if (avatarHash) {
-                    avatarURL = `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png`;
-                } else {
-                    // default avatar if user has no avatar
-                    avatarURL = `https://cdn.discordapp.com/embed/avatars/${userId % 5}.png`;
-                }
-            } else {
-                console.log('User not found');
-                return;
-            }
-            const embed = new EmbedBuilder()
-                .setAuthor({
-                    name: `${displayName} uploaded a file:`, // use the displayName instead of user.username
-                    url: downloadLink,
-                    iconURL: avatarURL
-                })
-                .setTitle(fileName)
-                .setURL(downloadLink)
-                .addFields(
-                    {
-                        name: "📁 File type",
-                        value: "`" + friendlyName + "`",
-                        inline: true
-                    },
-                    {
-                        name: "📊 File size",
-                        value: "`" + prettyBytes(fileSize) + "`",
-                        inline: true
-                    },
-                    {
-                        name: "📅 Expires at",
-                        value: "`" + expirationDateString + "`",
-                        inline: true
-                    },
-                    {
-                        name: "__Actions__",
-                        value: `🦠 [**Check on VirusTotal**](https://hello.com)\n🚩 [**Report file**](https://world.com)`,
-                        inline: false
-                    },
-                )
-                .setThumbnail(fileThumbnail) // TODO: thumbnail based on filetype
-                .setColor(userData.accent_color.toString(16).padStart(6, '0'))
-                .setFooter({
-                    text: displayName,
-                    iconURL: avatarURL,
-                })
-                .setTimestamp();
+    if (isDM == true) {
+        console.log("Sending DM message");
+        client.users.cache.get(channelId).send({ embeds: [embed] });
+    } else {
+        console.log("Sending channel message");
+        channel.send({ embeds: [embed] });
+    }
 
-            if (isDM == true) {
-                console.log("Sending DM message");
-                client.users.cache.get(channelId).send({ embeds: [embed] });
-            } else {
-                console.log("Sending channel message");
-                channel.send({ embeds: [embed] });
-            }
-
-        }).catch((error) => {
-            console.error('Error checking for file thumbnail:', error);
-        });
 
 });
 
