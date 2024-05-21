@@ -53,16 +53,20 @@ export const parseAndUpload = async (req, dbUser, discordUserData) => {
             return;
         })
 
+        let lastEmittedProgress = 0;
+
         form.on('progress', (bytesReceived, bytesExpected) => {
-            const progressPercentage = bytesReceived / bytesExpected * 100; // Calculate the progress as a percentage
-            if (!io) {
-                console.error('Socket.io not initialized');
+            const progressPercentage = Math.round(bytesReceived / bytesExpected * 100); // Calculate the progress as a percentage and round it to the nearest whole number
 
-            } else {
-                // Emit a 'progress' event with the calculated progress
-                io.emit('uploadProgress', { progress: progressPercentage });
+            if (progressPercentage !== lastEmittedProgress) {
+                if (!io) {
+                    console.error('Socket.io not initialized');
+                } else {
+                    // Emit a 'progress' event with the calculated progress
+                    io.emit('uploadProgress', { progress: progressPercentage });
+                    lastEmittedProgress = progressPercentage;
+                }
             }
-
         });
 
         form.on('fileBegin', (formName, file) => {

@@ -14,11 +14,11 @@
       </div>
 
       <!-- Progress Bar -->
-      <div v-if="isUploading && isUploading.value === true" class="mb-1 flex justify-between">
-        <span class="text-base font-medium text-blue-700 dark:text-white">Upload progress</span>
-        <span class="text-sm font-medium text-blue-700 dark:text-white">{{ uploadProgress }}%</span>
+      <div class="mb-1 flex justify-between" v-if="isUploading">
+        <span class="text-base font-medium  dark:text-white">Upload progress</span>
+        <span class="text-sm font-medium dark:text-white">{{ uploadProgress }}%</span>
       </div>
-      <div v-if="isUploading && isUploading.value === true"
+      <div v-if="isUploading"
         class="h-5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
         <div class="h-5 rounded-full bg-indigo-500" :style="{ width: `${uploadProgress}%` }"></div>
       </div>
@@ -37,7 +37,6 @@
     </div>
     <!-- Button to start uploading -->
     <div class="Uploader">
-      <!-- ...existing code... -->
       <UploadQueue :queue="uploadQueue" @remove="removeFromQueue" />
       <button id="uploadButton" v-if="!cannotUpload()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         @click="uploadFile">Upload</button>
@@ -60,7 +59,6 @@ export default defineComponent({
 
   setup() {
     const authStore = useAuthStore();
-    const selectedFile = ref(null);
     const isUploading = ref(false);
     const uploadProgress = ref(0);
     const config = ref(null);
@@ -75,11 +73,12 @@ export default defineComponent({
     })
 
     const socket = io();
-    socket.on("uploadProgress", (data) => {
-      uploadProgress.value = data.progress;
-    });
-
     onMounted(async () => {
+      socket.on("uploadProgress", (data) => {
+        console.log('Upload progress:', data.progress);
+        uploadProgress.value = data.progress;
+      });
+
       let configData = localStorage.getItem("config");
       if (!configData) {
         const response = await fetch("/config");
@@ -197,7 +196,7 @@ export default defineComponent({
 
     return {
       authStore,
-      selectedFile,
+      isUploading,
       uploadProgress,
       handleFileUpload,
       uploadFile,
