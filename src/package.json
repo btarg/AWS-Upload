@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node app.js",
-    "dev": "npm run build && nodemon app.js",
+    "dev:server": "nodemon app.js",
+    "dev:client": "cd frontend && npm run dev",
+    "dev": "concurrently --kill-others \"npm run dev:server\" \"npm run dev:client\"",
     "build": "cd frontend && npm run build"
   },
   "author": "btarg",
@@ -27,7 +29,9 @@
     "friendly-mimes": "^2.0.0",
     "pg": "^8.11.5",
     "pretty-bytes": "^6.1.1",
-    "socket.io": "^4.7.5",
-    "vue-router": "^4.3.2"
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

@@ -6,7 +6,7 @@ import NotFound from './pages/NotFound.vue'; // Import the NotFound component
 const routes = [
     { path: '/', component: Home },
     { path: '/upload', component: UploadPage },
-    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound }, // Add this line
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound },
 ];
 
 const router = createRouter({

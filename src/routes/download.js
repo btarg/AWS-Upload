@@ -52,7 +52,7 @@ router.get('/:id', limiter, async (req, res) => {
 
     try {
         const fileId = req.params.id;
-        const file = await getFileById(fileId); 
+        const file = await getFileById(fileId);
         const signedUrl = await getS3URL(file.userid, fileId);
         const friendlyFileType = await getFriendlyFileType(file.filename);
         const thumbnail = await getThumbnailUrl(file.filename);
@@ -89,7 +89,9 @@ router.get('/:id', limiter, async (req, res) => {
                 </style>
             </head>
             <body>
-                ${friendlyFileType.mime.startsWith('video/') ? `<video id="my-video" class="video-js" controls preload="auto" data-setup="{}"><source src="${signedUrl}" type="${friendlyFileType.mime}">Your browser does not support the video tag.</video><script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script><script>var player = videojs('my-video');</script>` : ''}
+                ${friendlyFileType.mime.startsWith('video/')
+                ? `<video id="my-video" class="video-js" controls preload="auto" data-setup="{}"><source src="${signedUrl}" type="${friendlyFileType.mime}">Your browser does not support the video tag.</video><script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script><script>var player = videojs('my-video');</script>`
+                : `<embed src="${signedUrl}" type="${friendlyFileType.mime}" width="500" height="500">`}
             </body>
             </html>
         `;

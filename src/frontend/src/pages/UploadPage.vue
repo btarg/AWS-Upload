@@ -6,9 +6,8 @@
     authStore.discordUser ? authStore.discordUser.username : ""
     }}</label>
 
-  <GuildDropdown v-if="authStore.loggedIn" @guild-selected="handleGuildSelected" />
-  <Uploader v-if="selectedGuildId && authStore.loggedIn" :selectedGuildId="selectedGuildId" />
-  <label v-if="selectedGuildId && authStore.loggedIn">
+  <Uploader v-if="authStore.loggedIn" />
+  <label v-if="authStore.loggedIn">
     Used:
     {{ bytesUsed }} /
     {{ bytesAllowed }}
@@ -18,7 +17,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useAuthStore } from "../stores/authStore.js";
-import GuildDropdown from "../components/GuildDropdown.vue";
 import Uploader from "../components/Uploader.vue";
 import { prettyBytesPSQL } from "../util.js";
 
@@ -26,17 +24,8 @@ const authStore = useAuthStore();
 const bytesUsed = ref("");
 const bytesAllowed = ref("");
 
-import { onBeforeUnmount } from "vue";
-
-let intervalId;
-
 onMounted(async () => {
   await updateUserData();
-  intervalId = setInterval(updateUserData, 30000); // Refresh every 30 seconds
-});
-
-onBeforeUnmount(() => {
-  clearInterval(intervalId); // Clear the interval when the component is unmounted
 });
 
 async function updateUserData() {
@@ -56,7 +45,6 @@ async function updateUserData() {
 export default {
   name: "UploadPage",
   components: {
-    GuildDropdown,
     Uploader,
   },
   data() {
