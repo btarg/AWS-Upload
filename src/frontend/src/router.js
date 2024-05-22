@@ -8,7 +8,6 @@ const routes = [
     { path: '/upload', component: UploadPage },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound },
 ];
-
 const router = createRouter({
     history: createWebHistory(),
     routes,
