@@ -1,5 +1,7 @@
+import dotenv from 'dotenv';
+dotenv.config();
 const router = express.Router();
-router.use(cookieParser());
+router.use(cookieParser(process.env.SESSION_SECRET));
 
 import rateLimit from 'express-rate-limit';
 import express from 'express';
@@ -27,7 +29,7 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
 
     const hostname = getFullHostname(req.hostname);
 
-    const discordUserData = req.cookies.serverDiscordUser;
+    const discordUserData = req.signedCookies.serverDiscordUser;
     const userId = discordUserData.id;
 
     if (!userId) {

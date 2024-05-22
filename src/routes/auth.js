@@ -2,17 +2,19 @@ import express from 'express';
 import { oauth } from '../config/oauth2.js';
 import { getUserById, upsertUserData } from '../models/userModel.js';
 import cookieParser from 'cookie-parser';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const router = express.Router();
 
-router.use(cookieParser());
+router.use(cookieParser(process.env.SESSION_SECRET));
 
 const discordScope = ["identify", "guilds", "email"];
 
 // Middleware to check if the user is authenticated with discord
 export const checkAuthenticated = async (req, res, next) => {
     try {
-        const discordUser = req.cookies.serverDiscordUser;
+        const discordUser = req.signedCookies.serverDiscordUser;
         if (discordUser && discordUser.id) {
             next();
         } else {
@@ -56,7 +58,7 @@ router.post('/storeRedirect', (req, res) => {
 router.get('/refresh', checkAuthenticated, async (req, res) => {
     console.log("Refreshing token endpoint");
 
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.signedCookies.refreshToken;
     if (!refreshToken) {
         console.error('Refresh token not found');
         return res.status(400).send('Refresh token not found');
@@ -73,12 +75,12 @@ router.get('/refresh', checkAuthenticated, async (req, res) => {
 
         //req.session.accessToken = newToken.access_token;
         console.log("New refresh token:", newToken.refresh_token);
-        res.cookie('refreshToken', newToken.refresh_token);
-        res.cookie('accessToken', newToken.access_token);
+        res.cookie('refreshToken', newToken.refresh_token, { httpOnly: true, signed: true });
+        res.cookie('accessToken', newToken.access_token, { httpOnly: true, signed: true });
 
         const oauthDiscordUser = await oauth.getUser(newToken.access_token);
-        res.cookie('serverDiscordUser', oauthDiscordUser, { httpOnly: true });
-        res.cookie('discordUser', oauthDiscordUser, { httpOnly: false });
+        res.cookie('serverDiscordUser', oauthDiscordUser, { httpOnly: true, signed: true });
+        res.cookie('discordUser', oauthDiscordUser, { httpOnly: false, signed: true });
 
         res.json({ accessToken: newToken.access_token });
     } catch (error) {
@@ -89,7 +91,7 @@ router.get('/refresh', checkAuthenticated, async (req, res) => {
 
 router.get('/login', (req, res) => {
     const redirectUri = `${req.protocol}://${req.get('host')}/auth/callback`;
-    if (req.cookies.serverUser && req.cookies.serverDiscordUser) {
+    if (req.signedCookies.serverUser && req.signedCookies.serverDiscordUser) {
         // If the user is already authenticated, redirect to the redirectUri
         res.redirect(redirectUri);
     } else {
@@ -123,11 +125,11 @@ router.get('/callback', async (req, res) => {
             throw new Error("User is not verified");
         }
         //req.session.accessToken = token.access_token;
-        res.cookie('serverDiscordUser', oauthDiscordUser, { httpOnly: true });
+        res.cookie('serverDiscordUser', oauthDiscordUser, { httpOnly: true, signed: true });
         res.cookie('discordUser', oauthDiscordUser);
 
-        res.cookie('refreshToken', token.refresh_token);
-        res.cookie('accessToken', token.access_token);
+        res.cookie('refreshToken', token.refresh_token, { httpOnly: true, signed: true });
+        res.cookie('accessToken', token.access_token, { httpOnly: true, signed: true });
 
         // Save the user data to the database if they are not already present
         const existingUser = await getUserById(oauthDiscordUser.id);
@@ -146,15 +148,15 @@ router.get('/callback', async (req, res) => {
 
 router.get('/user', checkAuthenticated, async (req, res) => {
     try {
-        const discordUser = req.cookies.serverDiscordUser;
+        const discordUser = req.signedCookies.serverDiscordUser;
         const dbUser = await getUserById(discordUser.id);
         // if we have a valid discord user but no db entry, create a db entry (edgecase)
         if (dbUser.id === undefined && discordUser.id) {
             console.log('Discord user detected but no DB record. Creating user in database');
             await upsertUserData(discordUser.id, false, null, 0);
         }
-        res.cookie('user', dbUser); // update the user cookie with the database user
-        res.cookie('serverUser', dbUser, { httpOnly: true });
+        res.cookie('user', dbUser, { httpOnly: false, signed: true }); // update the user cookie with the database user
+        res.cookie('serverUser', dbUser, { httpOnly: true, signed: true });
         res.json(dbUser);
     } catch (error) {
         console.error('Error fetching user data', error);
@@ -162,7 +164,7 @@ router.get('/user', checkAuthenticated, async (req, res) => {
     }
 });
 router.get('/discordUser', checkAuthenticated, (req, res) => {
-    res.json(req.cookies.serverDiscordUser);
+    res.json(req.signedCookies.serverDiscordUser);
 });
 
 export default router;

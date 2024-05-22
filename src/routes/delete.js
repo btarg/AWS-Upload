@@ -6,7 +6,7 @@ import { checkAuthenticated } from './auth.js';
 import express from 'express';
 const router = express.Router();
 import cookieParser from 'cookie-parser';
-router.use(cookieParser());
+router.use(cookieParser(process.env.SESSION_SECRET));
 
 const s3Client = new S3Client({ region: process.env.S3_REGION });
 
@@ -20,7 +20,7 @@ router.delete('/:id', checkAuthenticated, async (req, res) => {
     }
 
     // Check if the logged-in user is the owner of the file
-    const discordUser = req.cookies.serverDiscordUser;
+    const discordUser = req.signedCookies.serverDiscordUser;
     if (discordUser.id !== file.userid) {
         return res.status(403).send('Not authorized to delete this file');
     }

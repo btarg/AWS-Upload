@@ -84,6 +84,10 @@ export const parseAndUpload = async (req, dbUser, discordUserData) => {
                     form.emit('error', e);
                 });
 
+                // calculate part size - 5MB minimum, 10,000 maximum parts allowed
+                const fileSizeInMB = fileSize / (1024 * 1024);
+                const partSize = Math.max(5, Math.ceil(fileSizeInMB / 10000)) * 1024 * 1024;
+
                 // upload to S3
                 new Upload({
                     client: new S3Client({
@@ -101,7 +105,7 @@ export const parseAndUpload = async (req, dbUser, discordUserData) => {
                     },
                     tags: [], // optional tags
                     queueSize: 4, // optional concurrency configuration
-                    partSize: 1024 * 1024 * 5, // optional size of each part, in bytes, at least 5MB
+                    partSize: partSize,
                     leavePartsOnError: false, // optional manually handle dropped parts
                 }).done()
                     .then(data => {

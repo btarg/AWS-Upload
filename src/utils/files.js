@@ -20,7 +20,11 @@ export async function getFriendlyFileType(fileName) {
     }
 }
 export async function getThumbnailUrl(fileName) {
-    const ext = path.extname(fileName); // get file extension
+    let ext = path.extname(fileName); // get file extension
+    // remove dot for the url
+    if (ext.startsWith(".")) {
+        ext = ext.slice(1);
+    }
     const thumbnailUrlBase = "https://raw.githubusercontent.com/redbooth/free-file-icons/master/512px";
     const isValid = await isValidUrl(`${thumbnailUrlBase}/${ext}.png`);
     return isValid ? `${thumbnailUrlBase}/${ext}.png` : `${thumbnailUrlBase}/_page.png`;
