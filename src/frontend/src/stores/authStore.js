@@ -53,7 +53,6 @@ export const useAuthStore = defineStore('auth', {
                         .then((response) => response.json())
                         .then((discordUserData) => {
                             this.discordUser = discordUserData;
-                            document.cookie = `discordUser=j:${encodeURIComponent(JSON.stringify(discordUserData))}`;
                             resolve(discordUserData);
                         })
                         .catch((error) => {
@@ -69,7 +68,7 @@ export const useAuthStore = defineStore('auth', {
                 this.loggedIn = false;
 
                 // Check if the user's authentication status is already stored in the cookies
-                const userCookie = document.cookie.split('; ').find(row => row.startsWith('user=j:'));
+                const userCookie = document.cookie.split('; ').find(row => row.startsWith('dbUser=j:'));
                 console.log('Stored user:', userCookie);
 
                 if (userCookie && !override) {
@@ -80,6 +79,7 @@ export const useAuthStore = defineStore('auth', {
                     } else {
                         this.resetUser();
                         reject(new Error("No user id found in cookie"));
+                        this.resetUser();
                     }
                 } else {
                     fetch("/auth/user")
@@ -116,15 +116,19 @@ export const useAuthStore = defineStore('auth', {
                 await this.updateDiscordUser();
             } catch (error) {
                 console.error('Error updating login:', error);
+                this.resetUser();
             }
         },
 
         resetUser() {
             this.loggedIn = false;
-            this.user = null;
+            this.dbUser = null;
             this.discordUser = null;
-            document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "dbUser=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             document.cookie = "discordUser=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            
         }
     },
 });

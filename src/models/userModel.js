@@ -1,109 +1,99 @@
 import pool from '../config/database.js';
 import dotenv from 'dotenv';
-
 dotenv.config();
 
 // Create the users table if it doesn't exist
 export const createUserTable = async () => {
-    const defaultBytesAllowed = await getBytesAllowed(false);
-
     const query = `
     CREATE TABLE IF NOT EXISTS users (
       id VARCHAR(255) PRIMARY KEY,
-      isPremium BOOLEAN NOT NULL DEFAULT false,
-      premiumExpiry TIMESTAMP,
-      bytesUsed BIGINT DEFAULT 0,
-      bytesAllowed BIGINT DEFAULT ${defaultBytesAllowed}
+      data JSONB NOT NULL
     );
   `;
     await pool.query(query);
-};
-
-// Get user by ID
-export const getUserById = async (userId) => {
-    const query = 'SELECT * FROM users WHERE id = $1';
-    const { rows } = await pool.query(query, [userId]);
-    if (rows.length > 0) {
-        const user = rows[0];
-        let isPremium = user.ispremium;
-        if (user.premiumexpiry && !isNaN(new Date(user.premiumexpiry))) {
-            isPremium = user.ispremium && new Date(user.premiumexpiry) > new Date();
-        }
-        const bytesAllowed = await getBytesAllowed(isPremium);
-
-        return { id: user.id, isPremium, premiumExpiry: user.premiumexpiry, bytesUsed: user.bytesused, bytesAllowed: bytesAllowed };
-    }
-    // empty user with undefined id
-    const bytesAllowed = await getBytesAllowed(false);
-    return { isPremium: false, premiumExpiry: null, bytesUsed: 0, bytesAllowed: bytesAllowed };
 };
 
 export const getAllUsers = async () => {
     const query = `
     SELECT * FROM users;
   `;
-
     const { rows } = await pool.query(query);
     return rows;
 }
 
-export const getBytesAllowed = async (premium) => {
-    if (premium) {
-        return (process.env.MB_ALLOWED_PREMIUM || 25000) * 1024 * 1024; // 100mb
-    } else {
-        return (process.env.MB_ALLOWED || 10000) * 1024 * 1024
+export const getUserByDiscord = async (discordUserId) => {
+    const query = 'SELECT * FROM users WHERE data->>\'discordId\' = $1';
+    const { rows } = await pool.query(query, [discordUserId]);
+    if (rows.length > 0) {
+        return rows[0];
     }
+    return null;
+}
+
+export const getUserById = async (userId) => {
+    const query = 'SELECT * FROM users WHERE id = $1';
+    const { rows } = await pool.query(query, [userId]);
+    if (rows.length > 0) {
+        return rows[0];
+    }
+    // empty user with undefined id - we handle this elsewhere to create a new user
+    return null;
 };
 
 // Insert or update a user
-export const upsertUserData = async (id, isPremium, premiumExpiry, bytesUsed) => {
-    const bytesAllowed = getBytesAllowed(isPremium);
-    const user = {
-        id,
-        isPremium,
-        premiumExpiry,
-        bytesUsed,
-        bytesAllowed
-    };
-    await upsertUser(user);
+export const upsertUserData = async (id, data) => {
+    if (!data.bytesAllowed) {
+        data.bytesAllowed = await getBytesAllowed();
+    }
+    return await upsertUser(id, data);
 };
 
+export async function getBytesAllowed() {
+    return (process.env.MB_ALLOWED || 10000) * 1024 * 1024;
+};
 
-export const upsertUser = async (user) => {
+export const addCredits = async (userId, creditsToAdd) => {
+    const user = await getUserById(userId);
+    if (user) {
+        user.data.credits += creditsToAdd;
+        await upsertUser(userId, user.data);
+    }
+};
+
+export const removeCredits = async (userId, creditsToRemove) => {
+    const user = await getUserById(userId);
+    if (user) {
+        user.data.credits = Math.max(0, user.data.credits - creditsToRemove);
+        await upsertUser(userId, user.data);
+    }
+};
+
+export const upsertUser = async (id, data) => {
     const query = `
-    INSERT INTO users (id, isPremium, premiumExpiry, bytesUsed)
-    VALUES ($1, $2, $3, $4)
+    INSERT INTO users (id, data)
+    VALUES ($1, $2)
     ON CONFLICT (id) DO UPDATE
-    SET isPremium = EXCLUDED.isPremium,
-        premiumExpiry = EXCLUDED.premiumExpiry,
-        bytesUsed = EXCLUDED.bytesUsed
+    SET data = EXCLUDED.data
+    RETURNING *
   `;
-    await pool.query(query, [user.id, user.isPremium, user.premiumExpiry, user.bytesUsed]);
+    const { rows } = await pool.query(query, [id, JSON.stringify(data)]);
+    return rows[0];
 };
+
 
 export const addBytes = async (userId, bytes) => {
-    const query = `
-    UPDATE users
-    SET bytesUsed = bytesUsed + $2
-    WHERE id = $1
-  `;
-    try {
-        await pool.query(query, [userId, bytes]);
-    } catch (error) {
-        console.error('Error updating bytes used:', error);
+    const user = await getUserById(userId);
+    if (user) {
+        user.data.bytesUsed += bytes;
+        await upsertUser(userId, user.data);
     }
 };
 
 // Remove bytes from a user
 export const removeBytes = async (userId, bytes) => {
-    const query = `
-    UPDATE users
-    SET bytesUsed = GREATEST(0, bytesUsed - $2)
-    WHERE id = $1
-  `;
-    try {
-        await pool.query(query, [userId, bytes]);
-    } catch (error) {
-        console.error('Error removing bytes used:', error);
+    const user = await getUserById(userId);
+    if (user) {
+        user.data.bytesUsed = Math.max(0, user.data.bytesUsed - bytes);
+        await upsertUser(userId, user.data);
     }
 };

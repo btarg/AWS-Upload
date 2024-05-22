@@ -1,12 +1,12 @@
 import express from 'express';
 import { oauth } from '../config/oauth2.js';
-import { getUserById, upsertUserData } from '../models/userModel.js';
+import { getUserById, getUserByDiscord, upsertUserData } from '../models/userModel.js';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 const router = express.Router();
-
 router.use(cookieParser(process.env.SESSION_SECRET));
 
 const discordScope = ["identify", "guilds", "email"];
@@ -14,30 +14,32 @@ const discordScope = ["identify", "guilds", "email"];
 // Middleware to check if the user is authenticated with discord
 export const checkAuthenticated = async (req, res, next) => {
     try {
-        const discordUser = req.signedCookies.serverDiscordUser;
-        if (discordUser && discordUser.id) {
+        const discordUser = req.signedCookies.discordUser;
+
+        if (discordUser) {
             next();
         } else {
             // don't "throw" here, just send a response
-            res.status(401).send('Not authenticated');
+            res.status(401).json({ error: 'Not authenticated' });
             return;
         }
     } catch (error) {
         console.error('Error checking authentication', error);
-        res.status(401).send('Not authenticated'); // Respond with an error
+        res.status(401).json({ error: 'Error authenticating' });
     }
 };
 
-router.get('/logout', (req, res) => {
-
-    // remove cookies including serverside ones
-    res.clearCookie('user');
-    res.clearCookie('discordUser')
-    res.clearCookie('serverUser');
-    res.clearCookie('serverDiscordUser')
-
+export function removeAllCookies(res) {
+    console.log("Removing all cookies");
+    res.clearCookie('discordUser');
+    res.clearCookie('dbUser');
     res.clearCookie('refreshToken');
     res.clearCookie('accessToken');
+}
+
+router.get('/logout', (req, res) => {
+
+    removeAllCookies(res);
 
     req.session.destroy((err) => {
         if (err) {
@@ -79,7 +81,6 @@ router.get('/refresh', checkAuthenticated, async (req, res) => {
         res.cookie('accessToken', newToken.access_token, { httpOnly: true, signed: true });
 
         const oauthDiscordUser = await oauth.getUser(newToken.access_token);
-        res.cookie('serverDiscordUser', oauthDiscordUser, { httpOnly: true, signed: true });
         res.cookie('discordUser', oauthDiscordUser, { httpOnly: false, signed: true });
 
         res.json({ accessToken: newToken.access_token });
@@ -91,7 +92,7 @@ router.get('/refresh', checkAuthenticated, async (req, res) => {
 
 router.get('/login', (req, res) => {
     const redirectUri = `${req.protocol}://${req.get('host')}/auth/callback`;
-    if (req.signedCookies.serverUser && req.signedCookies.serverDiscordUser) {
+    if (req.signedCookies.dbUser && req.signedCookies.discordUser) {
         // If the user is already authenticated, redirect to the redirectUri
         res.redirect(redirectUri);
     } else {
@@ -124,17 +125,15 @@ router.get('/callback', async (req, res) => {
         if (!oauthDiscordUser.verified) {
             throw new Error("User is not verified");
         }
-        //req.session.accessToken = token.access_token;
-        res.cookie('serverDiscordUser', oauthDiscordUser, { httpOnly: true, signed: true });
-        res.cookie('discordUser', oauthDiscordUser);
+        res.cookie('discordUser', oauthDiscordUser, { httpOnly: false, signed: true });
 
         res.cookie('refreshToken', token.refresh_token, { httpOnly: true, signed: true });
         res.cookie('accessToken', token.access_token, { httpOnly: true, signed: true });
 
         // Save the user data to the database if they are not already present
-        const existingUser = await getUserById(oauthDiscordUser.id);
-        if (existingUser.id === undefined) {
-            await upsertUserData(oauthDiscordUser.id, false, null, 0);
+        const existingUser = await getUserByDiscord(oauthDiscordUser.id);
+        if (!existingUser) {
+            await upsertDefaultUserData(oauthDiscordUser.id);
         }
 
         // Redirect to the previous page which is saved in session
@@ -146,25 +145,43 @@ router.get('/callback', async (req, res) => {
     }
 });
 
+
+async function upsertDefaultUserData(discordId) {
+    // create new uuid
+    const uuid = uuidv4();
+    const dataToInsert = {
+        discordId: discordId,
+        bytesUsed: 0,
+        bytesAllowed: 0,
+        credits: 0
+    }
+    return await upsertUserData(uuid, dataToInsert);
+}
+
 router.get('/user', checkAuthenticated, async (req, res) => {
     try {
-        const discordUser = req.signedCookies.serverDiscordUser;
-        const dbUser = await getUserById(discordUser.id);
+        const discordUser = req.signedCookies.discordUser;
+        let dbUser = req.signedCookies.dbUser;
         // if we have a valid discord user but no db entry, create a db entry (edgecase)
-        if (dbUser.id === undefined && discordUser.id) {
+        if (!dbUser && discordUser.id) {
             console.log('Discord user detected but no DB record. Creating user in database');
-            await upsertUserData(discordUser.id, false, null, 0);
+            const existingUser = await getUserByDiscord(discordUser.id);
+            if (!existingUser) {
+                dbUser = await upsertDefaultUserData(discordUser.id);
+            } else {
+                dbUser = existingUser;
+            }
         }
-        res.cookie('user', dbUser, { httpOnly: false, signed: true }); // update the user cookie with the database user
-        res.cookie('serverUser', dbUser, { httpOnly: true, signed: true });
+        res.cookie('dbUser', dbUser, { httpOnly: false, signed: true });
         res.json(dbUser);
     } catch (error) {
         console.error('Error fetching user data', error);
         res.status(500).send('Error fetching user data');
     }
 });
+
 router.get('/discordUser', checkAuthenticated, (req, res) => {
-    res.json(req.signedCookies.serverDiscordUser);
+    res.json(req.signedCookies.discordUser);
 });
 
 export default router;

@@ -16,13 +16,14 @@ router.delete('/:id', checkAuthenticated, async (req, res) => {
     // Get the file record from the database
     const file = await getFileById(fileId);
     if (!file) {
-        return res.status(404).send('File not found');
+        return res.status(404).json({ error: 'File not found' });
     }
 
     // Check if the logged-in user is the owner of the file
-    const discordUser = req.signedCookies.serverDiscordUser;
-    if (discordUser.id !== file.userid) {
-        return res.status(403).send('Not authorized to delete this file');
+    // (we use the user from the database and not discord user anymore)
+    const currentUser = req.signedCookies.dbUser;
+    if (currentUser.id !== file.userid) {
+        return res.status(403).json({ error: 'Not authorized to delete this file' });
     }
 
     // Delete the file from S3

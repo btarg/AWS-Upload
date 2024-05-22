@@ -46,8 +46,8 @@ export async function deleteFileById(fileId) {
     return result;
 }
 
-export function emitFileUploaded(channelId, userData, isDM, fileName, fileSize, expirationDate, downloadLink) {
-    eventEmitter.emit('fileUploaded', { channelId: channelId, userData: userData, isDM: isDM, fileName: fileName, fileSize: fileSize, expirationDate: expirationDate, downloadLink: downloadLink });
+export function emitFileUploaded(user, fileName, fileSize, expirationDate, downloadLink) {
+    eventEmitter.emit('fileUploaded', { user: user, fileName: fileName, fileSize: fileSize, expirationDate: expirationDate, downloadLink: downloadLink });
 }
 
 export function searchFile(userId, filename) {

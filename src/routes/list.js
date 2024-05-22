@@ -30,7 +30,7 @@ router.get('/users', adminAuth, async (req, res) => {
         res.json(users);
     } catch (err) {
         console.error('Error listing users', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ error: 'Server error' });
     }
 });
 

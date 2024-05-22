@@ -25,10 +25,8 @@ export const parseAndUpload = async (req, dbUser, discordUserData) => {
 
         const fileHash = req.headers['filehash'];
         const fileSize = Number(req.headers['filesize']);
-        const channelId = req.headers['channelid'];
-        const isDM = req.headers['isdm'];
 
-        const userId = discordUserData.id;
+        const userId = dbUser.id;
 
         const form = formidable(options);
 
@@ -114,13 +112,16 @@ export const parseAndUpload = async (req, dbUser, discordUserData) => {
                         // add bytes to user
                         addBytes(userId, fileSize);
 
-                        const expirationDate = dbUser.isPremium ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+                        // set expiration date to 7 days from now
+                        const expirationDate = new Date();
+                        expirationDate.setDate(expirationDate.getDate() + 7);
+
 
                         insertFile(fileId, userId, originalFilename, fileHash, fileSize, new Date(), expirationDate)
                             .then(() => {
                                 const downloadLink = `${hostname}/download/${fileId}`;
 
-                                emitFileUploaded(channelId, discordUserData, isDM, file.originalFilename, fileSize, expirationDate, downloadLink);
+                                emitFileUploaded(dbUser, file.originalFilename, fileSize, expirationDate, downloadLink);
                                 console.log(`Finished uploading to AWS: ${file.originalFilename}, user ${userId}`);
 
                                 resolve({ downloadLink: downloadLink });

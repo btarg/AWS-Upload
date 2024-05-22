@@ -9,7 +9,6 @@ import { parseAndUpload } from '../services/fileParser.js';
 import { checkAuthenticated } from '../routes/auth.js';
 import cookieParser from 'cookie-parser';
 import { getFileByHash, emitFileUploaded } from '../services/fileService.js';
-import { numberFromPSQL } from '../utils/conversions.js';
 import { getFullHostname } from '../utils/urls.js';
 import { getUserById } from '../models/userModel.js';
 
@@ -23,28 +22,27 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
     // these are the same headers that will be passed to the parser
     const fileHash = req.headers['filehash'];
     const fileSize = Number(req.headers['filesize']);
-    // const guildId = req.headers['guildid'];
-    const channelId = req.headers['channelid'];
-    const isDM = req.headers['isdm'];
 
     const hostname = getFullHostname(req.hostname);
 
-    const discordUserData = req.signedCookies.serverDiscordUser;
-    const userId = discordUserData.id;
+    const discordUser = req.signedCookies.discordUser;
+    const currentUser = req.signedCookies.dbUser;
+    // use the DB user for file id's
+    const userId = currentUser.id;
 
     if (!userId) {
-        return res.status(404).send("User not found");
+        return res.status(404).json({ error: "User not found" });
     }
     let dbUser;
     try {
         dbUser = await getUserById(userId);
         if (!dbUser) {
             console.log("User not found");
-            return res.status(404).send("User not found");
+            return res.status(404).json({ error: "User not found" });
         }
     } catch (error) {
         console.log("Error getting user: " + error);
-        return res.status(500).send("Error getting user");
+        return res.status(500).json({ message: "Error getting user" });
     }
 
     // Check if a file with the same hash already exists in this guild
@@ -54,13 +52,17 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
                 // If the file already exists, return the original copy
                 const downloadLink = `${hostname}/download/${existingFile.fileid}`; // remember, no capitals here
                 console.log("Existing download link: " + downloadLink);
-                emitFileUploaded(channelId, discordUserData, isDM, existingFile.filename, fileSize, existingFile.expiresat, downloadLink);
+                emitFileUploaded(dbUser, existingFile.filename, fileSize, existingFile.expiresat, downloadLink);
                 return res.status(200).json({ message: 'File already exists', downloadLink: downloadLink });
             }
             else {
                 console.log("File does not already exist");
-                var bytesUsed = numberFromPSQL(dbUser.bytesUsed);
-                var bytesAllowed = numberFromPSQL(dbUser.bytesAllowed);
+
+                console.log(dbUser);
+                console.log(dbUser.data);
+
+                var bytesUsed = dbUser.data.bytesUsed;
+                var bytesAllowed = dbUser.data.bytesAllowed;
                 const bytesAboutToBeUsed = bytesUsed + fileSize;
 
                 console.log("FILE SIZE IS " + fileSize);
@@ -74,7 +76,7 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
                 }
 
                 try {
-                    const data = await parseAndUpload(req, dbUser, discordUserData);
+                    const data = await parseAndUpload(req, dbUser, discordUser);
                     // pass the data directly on success. the json should include downloadLink
                     return res.status(200).json(data);
                 } catch (error) {

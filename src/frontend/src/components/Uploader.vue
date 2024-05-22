@@ -147,25 +147,19 @@ export default defineComponent({
 
         const fileSizeInMB = selectedFile.size / (1024 * 1024);
         if (fileSizeInMB > config.value.maxFileSize) {
-          console.log(`File ${file.name} size exceeds the limit of ${config.value.maxFileSize}MB`);
+          console.log(`File ${selectedFile.name} size exceeds the limit of ${config.value.maxFileSize}MB`);
           continue;
         }
 
-        // only append the file to the form
-        const urlParams = new URLSearchParams(window.location.search);
+        // only append the file to the form and use headers for metadata
         const formData = new FormData();
         formData.append("file", selectedFile);
-        // the headers store details about the file upload so we don't have to parse them from a form
-        // this was a nightmare
         const response = await fetch("/putfile", {
           method: "POST",
           body: formData,
           headers: {
             fileHash: fileHash,
             fileSize: selectedFile.size,
-            channelId: urlParams.get("channel") || "867773234976260110",
-            userId: authStore.user.id,
-            isDM: urlParams.get("isDM") || "false",
           },
         });
         const result = await response.json();
@@ -177,6 +171,7 @@ export default defineComponent({
         } else {
           // alert the error
           console.log(result.error.message);
+          authStore.resetUser();
           continue;
         }
 
