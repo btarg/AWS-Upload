@@ -48,6 +48,8 @@ export async function upsertDefaultUserData(discordId) {
     // create new uuid
     const uuid = uuidv4();
     const bytesAllowed = await getBytesAllowed();
+    console.log(JSON.stringify(subscriptionPlans.NORMAL));
+    
     const dataToInsert = {
         discordId: discordId,
         bytesUsed: 0,

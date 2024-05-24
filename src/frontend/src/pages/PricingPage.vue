@@ -10,9 +10,10 @@
       <div class="flex justify-center space-x-6">
         <PricingCard v-for="(plan, key, index) in subscriptionPlans" :key="key"
           :titleClass="index === 0 ? 'greentext' : index === 1 ? 'purpletext' : 'orangetext'" :title="plan.title"
-          :price="plan.price"
-          :buttonText="plan.title === 'FREE' ? 'Start free' : 'Upgrade'" :description="plan.description"
-          :features="plan.featuresText.join(',')" :monthly="plan.title !== 'FREE'" :cardBorder="plan.title === 'PLUS'">
+          :price="plan.price" :buttonText="index === 0 ? 'Start free' : 'Upgrade' "
+          :iconClass="index === 0 ? 'fas fa-flag-checkered' : 'fas fa-circle-up'" :description="plan.description"
+          :maxHourlyUploads="plan.maxHourlyUploads" :totalUploadCap="plan.totalUploadCap" :featuresList="plan.features"
+          :monthly="plan.price > 0">
         </PricingCard>
       </div>
     </main>
@@ -22,13 +23,13 @@
 
 <style>
 .greentext {
-  background: linear-gradient(to right, #41ff26, #3afff6);
+  background: linear-gradient(to right, #00ff10, #37ffb5);
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .purpletext {
-  background: linear-gradient(to right, #2e23ff, #9400dd);
+  background: linear-gradient(to right, #5455ee, #a654f6);
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -50,7 +51,7 @@
 import PricingCard from '../components/PricingCard.vue';
 import HeaderBar from '../components/HeaderBar.vue';
 import FooterBar from '../components/FooterBar.vue';
-import { subscriptionPlans } from '../../../config/subscriptions.js';
+import { subscriptionFeatures, subscriptionPlans } from '../../../config/subscriptions.js';
 
 export default {
   components: {
@@ -60,7 +61,8 @@ export default {
   },
   data() {
     return {
-      subscriptionPlans
+      subscriptionPlans,
+      subscriptionFeatures
     };
   }
 };
