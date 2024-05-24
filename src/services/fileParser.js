@@ -13,7 +13,7 @@ import { getIo } from '../config/socket.js';
 
 dotenv.config();
 
-export const parseAndUpload = async (req, dbUser, discordUserData) => {
+export const parseAndUpload = async (req) => {
     return new Promise(async (resolve, reject) => {
         let options = {
             maxFileSize: (process.env.MB_MAX || 100) * 1024 * 1024, //100 megabytes converted to bytes,

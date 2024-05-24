@@ -43,6 +43,10 @@ import { getFullHostname } from './utils/urls.js';
     app.use('/discord', discordRoutes);
     app.use('/config', configRoutes);
 
+    app.get('/banner', (req, res) => {
+        res.sendFile(join(__dirname, 'banner.txt'));
+    });
+
     app.use(express.static(join(__dirname, 'frontend', 'dist')));
     app.get('*', (req, res) => {
         res.sendFile(join(__dirname, 'frontend', 'dist', 'index.html'));

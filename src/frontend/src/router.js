@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from './pages/Home.vue';
 import UploadPage from './pages/UploadPage.vue';
-import NotFound from './pages/NotFound.vue'; // Import the NotFound component
+import NotFound from './pages/NotFound.vue';
 
 const routes = [
     { path: '/', component: Home },

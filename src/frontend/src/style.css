@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -8,8 +8,6 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -17,13 +15,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: url('https://www.gamespot.com/a/uploads/screen_kubrick/1601/16018044/3976397-ps2-startup.jpg') no-repeat center center fixed;
+  background-size: cover;
+  z-index: -1;
+  opacity: 0.15;
+  filter: blur(0.75rem) brightness(125%);
 }
 
 h1 {
@@ -32,9 +35,7 @@ h1 {
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
+  padding: 0.5em 1em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
@@ -42,97 +43,62 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 button:hover {
-  border-color: #646cff;
+  border-color: #9d72ff;
 }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-.card {
-  padding: 2em;
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+  text-shadow: 0 0 10px rgba(100, 108, 255, 0.5);
 }
-
-#app {
-  max-width: 1280px;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  text-align: center;
+a:hover {
+  color: #ad80ff;
+  text-shadow: 0 0 10px rgba(173, 128, 255, 0.5);
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
+    @apply text-light-primary bg-light-background;
   }
   button {
-    background-color: #f9f9f9;
+    @apply bg-light-buttonSecondary border border-indigo-500 border-opacity-50;
+  }
+  a:hover {
+    color: #8e51ff;
   }
 }
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: rgb(30, 30, 35);
-}
 
-.ButtonGradient {
-  position: relative;
-  overflow: hidden;
-}
-
-.ButtonGradient:before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background: linear-gradient(#ffffff00, #7e22ce);
-  opacity: 0;
-  transition: opacity 0.5s ease-out;
-  z-index: 1;
-}
-
-.ButtonGradient:hover:before {
-  opacity: 1;
-}
-
-.ButtonGradient>* {
-  position: relative;
-  z-index: 2;
-}
-
-.button-text {
-  position: relative;
-  z-index: 2;
+@media (prefers-color-scheme: dark) {
+  :root {
+    @apply text-dark-primary bg-dark-background;
+  }
+  button {
+    @apply bg-dark-buttonSecondary border border-indigo-500 border-opacity-50;
+  }
+  a {
+    color: #8187fd;
+  }
 }
 
 .site-logo {
   font-family: "Nabla", system-ui;
-  font-weight: 400;
-  font-style: normal;
 }
-
-.nav,
-.site-logo {
-  font-size: 2rem;
-}
-
-.info-box {
-  background-color: rgba(105, 90, 205, 0.25);
-  padding: 1rem;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  font-size: 1.125rem;
-  color: whitesmoke;
-}
-
-.info-box div {
-  justify-content: flex-start;
-  padding-right: 1rem;
+.fading-line::before {
+  content: "";
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(to right, transparent, #9295f7, transparent);
+  margin-bottom: 2rem;
 }
