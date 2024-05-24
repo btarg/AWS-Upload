@@ -1,14 +1,13 @@
 import dotenv from 'dotenv';
 dotenv.config();
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getFileById, deleteFileById } from '../services/fileService.js';
 import { checkAuthenticated } from './auth.js';
 import express from 'express';
 const router = express.Router();
 import cookieParser from 'cookie-parser';
+import { b2Client } from '../config/backblaze.js';
 router.use(cookieParser(process.env.SESSION_SECRET));
-
-const s3Client = new S3Client({ region: process.env.S3_REGION });
 
 router.delete('/:id', checkAuthenticated, async (req, res) => {
     const fileId = req.params.id;
@@ -34,7 +33,7 @@ router.delete('/:id', checkAuthenticated, async (req, res) => {
     };
     const command = new DeleteObjectCommand(params);
     try {
-        await s3Client.send(command);
+        await b2Client.send(command);
     } catch (error) {
         console.error('Error deleting file from S3', error);
         return res.status(500).send('Error deleting file from S3');

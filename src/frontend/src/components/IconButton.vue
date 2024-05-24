@@ -1,10 +1,12 @@
 <template>
-    <button type="button" :class="buttonClasses" @click="navigate">
-        <i v-if="iconClass" :class="[iconClass, 'mr-2']"></i>
-        <span class="button-text">
-            <slot></slot>
-        </span>
-    </button>
+    <a :href="href" tabindex="-1">
+        <button type="button" :class="buttonClasses">
+            <i v-if="iconClass" :class="[iconClass, 'mr-2']"></i>
+            <span class="button-text">
+                <slot></slot>
+            </span>
+        </button>
+    </a>
 </template>
 
 <style>
@@ -97,13 +99,6 @@ export default {
                 'sm:py-2',
                 this.primary ? 'text-light-buttonTextPrimary dark:text-dark-buttonTextPrimary bg-light-buttonPrimary dark:bg-dark-buttonPrimary' : 'text-light-buttonTextSecondary dark:text-dark-buttonTextSecondary bg-light-secondaryButton dark:bg-dark-secondaryButton'
             ];
-        }
-    },
-    methods: {
-        navigate() {
-            if (this.href) {
-                window.location.href = this.href;
-            }
         }
     }
 }

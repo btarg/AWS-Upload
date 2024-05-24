@@ -2,14 +2,13 @@ import express from 'express';
 const router = express.Router();
 import dotenv from 'dotenv';
 dotenv.config();
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import rateLimit from "express-rate-limit";
 
 import { getFileById } from '../services/fileService.js';
 import { getFriendlyFileType, getThumbnailUrl } from '../utils/files.js';
-
-const s3Client = new S3Client({ region: process.env.S3_REGION });
+import { b2Client } from '../config/backblaze.js';
 
 const urlCache = new Map();
 
@@ -31,7 +30,7 @@ export async function getS3URL(userId, fileId, expiresInSeconds = 7200) {
         let signedUrl = urlCache.get(fileId);
         if (!signedUrl) {
             console.log(`URL for file ${fileId} not in cache, generating new link`);
-            signedUrl = await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
+            signedUrl = await getSignedUrl(b2Client, command, { expiresIn: expiresInSeconds });
             urlCache.set(fileId, signedUrl);
 
             // Automatically remove the URL from the cache just before it expires

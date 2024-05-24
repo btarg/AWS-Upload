@@ -1,8 +1,7 @@
 import dotenv from "dotenv";
-import { accessKeyId, secretAccessKey, region, Bucket } from '../config/aws.js';
+import { b2Client, accessKeyId, secretAccessKey, region, Bucket } from '../config/backblaze.js';
 import formidable from 'formidable';
 import { Upload } from "@aws-sdk/lib-storage";
-import { S3Client } from "@aws-sdk/client-s3";
 import { Transform } from 'stream';
 import { emitFileUploaded } from '../services/fileService.js';
 import { addBytes } from '../models/userModel.js';
@@ -87,18 +86,12 @@ export const parseAndUpload = async (req) => {
                 // calculate part size - 5MB minimum, 10,000 maximum parts allowed
                 const fileSizeInMB = fileSize / (1024 * 1024);
                 const partSize = Math.max(5, Math.ceil(fileSizeInMB / 10000)) * 1024 * 1024;
-
+                console.log(accessKeyId);
                 // upload to S3
                 new Upload({
-                    client: new S3Client({
-                        credentials: {
-                            accessKeyId,
-                            secretAccessKey
-                        },
-                        region
-                    }),
+                    client: b2Client,
                     params: {
-                        Bucket,
+                        Bucket: Bucket,
                         Key: `${userId}/${fileId}`,
                         Body: this._writeStream,
                         ContentDisposition: `inline; filename="${originalFilename}"`
