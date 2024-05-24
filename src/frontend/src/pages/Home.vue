@@ -1,6 +1,7 @@
 <template>
   <div class="home max-w-none">
-    <HeaderBar></HeaderBar>
+    <AnnouncementBanner />
+    <HeaderBar />
     <main class="flex flex-col items-center justify-center text-center mx-auto mb-10">
       <!-- Header box -->
       <div class="text-white bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg max-w-1xl p-4 mt-4">
@@ -50,6 +51,7 @@
 
 <script>
 import HeaderBar from '../components/HeaderBar.vue';
+import AnnouncementBanner from '../components/AnnouncementBanner.vue';
 import InfoBox from '../components/InfoBox.vue';
 import IconButton from '../components/IconButton.vue';
 import LoginButton from '../components/LoginButton.vue';
@@ -62,6 +64,7 @@ export default {
     InfoBoxWithButton,
     IconButton,
     LoginButton,
+    AnnouncementBanner,
     HeaderBar,
     FooterBar
   },
