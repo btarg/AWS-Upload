@@ -18,29 +18,36 @@
 import { ref, onMounted } from "vue";
 import { useAuthStore } from "../stores/authStore.js";
 import Uploader from "../components/Uploader.vue";
-import { prettyBytesPSQL } from "../util.js";
+import prettyBytes from 'pretty-bytes';
 
 const authStore = useAuthStore();
 const bytesUsed = ref("");
 const bytesAllowed = ref("");
+const lastUpdate = ref(Date.now()); // Add this line
+const cooldown = 60000; // Cooldown period in milliseconds (1 minute)
 
 onMounted(async () => {
   await updateUserData();
 });
 
 async function updateUserData() {
+  const now = Date.now();
+
   try {
-    await authStore.updateDBUser();
+    const isOnCooldown = now - lastUpdate.value < cooldown;
+    // if cooldown is active then we do not override
+    await authStore.updateDBUser(!isOnCooldown);
     if (authStore.user) {
-      bytesUsed.value = prettyBytesPSQL(authStore.user.data.bytesUsed);
-      bytesAllowed.value = prettyBytesPSQL(authStore.user.data.bytesAllowed);
+      bytesUsed.value = prettyBytes(Number(authStore.user.data.bytesUsed));
+      bytesAllowed.value = prettyBytes(Number(authStore.user.data.bytesAllowed));
     }
   } catch (error) {
     console.error('Error updating user data:', error);
+  } finally {
+    lastUpdate.value = now; // Update the timestamp
   }
 }
 </script>
-
 <script>
 export default {
   name: "UploadPage",

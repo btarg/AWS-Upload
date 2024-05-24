@@ -4,7 +4,6 @@ import { removeBytes } from '../models/userModel.js';
 import events from 'events';
 import pool from '../config/database.js';
 
-// Create an event emitter
 export const eventEmitter = new events.EventEmitter();
 
 export const getFileByHash = (fileHash) => {
@@ -38,7 +37,16 @@ export async function isFileIdUsed(fileId) {
     const file = await getFileById(fileId);
     return file !== null;
 }
+export const decreaseHealthPointsAndRemoveDecayedFiles = async () => {
+    // Decrease health points for all files
+    let query = 'UPDATE files SET lifetimeData = jsonb_set(lifetimeData, \'{healthPoints}\', ((lifetimeData->>\'healthPoints\')::int - 1)::text::jsonb)';
+    await pool.query(query);
 
+    // Remove decayed files
+    query = 'DELETE FROM files WHERE (lifetimeData->>\'healthPoints\')::int <= 0';
+    const { rows } = await pool.query(query);
+    return rows;
+};
 export async function deleteFileById(fileId) {
     const file = await getFileById(fileId);
     await removeBytes(file.userid, file.fileSize);
@@ -46,8 +54,8 @@ export async function deleteFileById(fileId) {
     return result;
 }
 
-export function emitFileUploaded(user, fileName, fileSize, expirationDate, downloadLink) {
-    eventEmitter.emit('fileUploaded', { user: user, fileName: fileName, fileSize: fileSize, expirationDate: expirationDate, downloadLink: downloadLink });
+export function emitFileUploaded(user, fileName, fileSize, encryptionData, downloadLink) {
+    eventEmitter.emit('fileUploaded', { user: user, fileName: fileName, fileSize: fileSize, encryptionData: encryptionData, downloadLink: downloadLink });
 }
 
 export function searchFile(userId, filename) {

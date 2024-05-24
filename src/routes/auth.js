@@ -1,15 +1,21 @@
 import express from 'express';
 import { oauth } from '../config/oauth2.js';
-import { getUserById, getUserByDiscord, upsertUserData } from '../models/userModel.js';
+import { getUserByDiscord } from '../models/userModel.js';
 import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 const router = express.Router();
 router.use(cookieParser(process.env.SESSION_SECRET));
 
 const discordScope = ["identify", "guilds", "email"];
+
+const rateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests, please try again later.'
+});
 
 // Middleware to check if the user is authenticated with discord
 export const checkAuthenticated = async (req, res, next) => {
@@ -37,7 +43,7 @@ export function removeAllCookies(res) {
     res.clearCookie('accessToken');
 }
 
-router.get('/logout', (req, res) => {
+router.get('/logout', checkAuthenticated, (req, res) => {
 
     removeAllCookies(res);
 
@@ -51,13 +57,13 @@ router.get('/logout', (req, res) => {
     });
 });
 
-router.post('/storeRedirect', (req, res) => {
+router.post('/storeRedirect', rateLimiter, (req, res) => {
     // Store the redirect URL in the session
     req.session.redirect = req.body.redirect;
     res.sendStatus(200);
 });
 
-router.get('/refresh', checkAuthenticated, async (req, res) => {
+router.get('/refresh', rateLimiter, checkAuthenticated, async (req, res) => {
     console.log("Refreshing token endpoint");
 
     const refreshToken = req.signedCookies.refreshToken;
@@ -90,7 +96,7 @@ router.get('/refresh', checkAuthenticated, async (req, res) => {
     }
 });
 
-router.get('/login', (req, res) => {
+router.get('/login', rateLimiter, (req, res) => {
     const redirectUri = `${req.protocol}://${req.get('host')}/auth/callback`;
     if (req.signedCookies.dbUser && req.signedCookies.discordUser) {
         // If the user is already authenticated, redirect to the redirectUri
@@ -107,7 +113,7 @@ router.get('/login', (req, res) => {
     }
 });
 
-router.get('/callback', async (req, res) => {
+router.get('/callback', rateLimiter, async (req, res) => {
     const redirect = req.session.redirect || '/'; // Get the redirect URL from the session
     const code = req.query.code;
     try {
@@ -145,28 +151,18 @@ router.get('/callback', async (req, res) => {
     }
 });
 
-
-async function upsertDefaultUserData(discordId) {
-    // create new uuid
-    const uuid = uuidv4();
-    const dataToInsert = {
-        discordId: discordId,
-        bytesUsed: 0,
-        bytesAllowed: 0,
-        credits: 0
-    }
-    return await upsertUserData(uuid, dataToInsert);
-}
-
-router.get('/user', checkAuthenticated, async (req, res) => {
+router.get('/user', rateLimiter, checkAuthenticated, async (req, res) => {
+    console.log("Fetching user data");
     try {
         const discordUser = req.signedCookies.discordUser;
         let dbUser = req.signedCookies.dbUser;
-        // if we have a valid discord user but no db entry, create a db entry (edgecase)
-        if (!dbUser && discordUser.id) {
-            console.log('Discord user detected but no DB record. Creating user in database');
+        const override = req.query.override === 'true';
+
+        // if we have a valid discord user but no db entry, create a db entry
+        if (!dbUser && discordUser.id || override) {
             const existingUser = await getUserByDiscord(discordUser.id);
             if (!existingUser) {
+                console.log('Discord user detected but no DB record. Creating user in database');
                 dbUser = await upsertDefaultUserData(discordUser.id);
             } else {
                 dbUser = existingUser;

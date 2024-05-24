@@ -64,6 +64,7 @@ export const useAuthStore = defineStore('auth', {
             });
         },
         updateDBUser(override = false) {
+            console.log('Updating DB User');
             return new Promise((resolve, reject) => {
                 this.loggedIn = false;
 
@@ -82,7 +83,8 @@ export const useAuthStore = defineStore('auth', {
                         this.resetUser();
                     }
                 } else {
-                    fetch("/auth/user")
+                    const authEndpoint = override ? "/auth/user?override=true" : "/auth/user";
+                    fetch(authEndpoint)
                         .then((response) => {
                             if (!response.ok) {
                                 this.resetUser();
@@ -104,6 +106,7 @@ export const useAuthStore = defineStore('auth', {
                             if (error.message === "Not authenticated") {
                                 this.resetUser();
                             }
+                            console.log(error.message);
                             reject(error);
                         });
                 }

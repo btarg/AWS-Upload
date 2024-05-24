@@ -1,6 +1,5 @@
 export function dateToString(originalDate) {
     let dateString = `(never)`;
-    // expirationDate is a TIMESTAMP from postgres
     const dateObj = new Date(originalDate);
 
     if (originalDate && dateObj) {

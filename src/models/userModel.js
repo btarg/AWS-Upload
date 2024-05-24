@@ -1,5 +1,6 @@
 import pool from '../config/database.js';
 import dotenv from 'dotenv';
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 // Create the users table if it doesn't exist
@@ -12,6 +13,37 @@ export const createUserTable = async () => {
   `;
     await pool.query(query);
 };
+
+export const upsertUser = async (id, data) => {
+    const query = `
+    INSERT INTO users (id, data)
+    VALUES ($1, $2)
+    ON CONFLICT (id) DO UPDATE
+    SET data = EXCLUDED.data
+    RETURNING *
+  `;
+    const { rows } = await pool.query(query, [id, JSON.stringify(data)]);
+    return rows[0];
+};
+
+export const upsertUserData = async (id, data) => {
+    if (!data.bytesAllowed) {
+        data.bytesAllowed = await getBytesAllowed();
+    }
+    return await upsertUser(id, data);
+};
+
+export async function upsertDefaultUserData(discordId) {
+    // create new uuid
+    const uuid = uuidv4();
+    const dataToInsert = {
+        discordId: discordId,
+        bytesUsed: 0,
+        bytesAllowed: 0,
+        credits: 0
+    }
+    return await upsertUserData(uuid, dataToInsert);
+}
 
 export const getAllUsers = async () => {
     const query = `
@@ -40,13 +72,7 @@ export const getUserById = async (userId) => {
     return null;
 };
 
-// Insert or update a user
-export const upsertUserData = async (id, data) => {
-    if (!data.bytesAllowed) {
-        data.bytesAllowed = await getBytesAllowed();
-    }
-    return await upsertUser(id, data);
-};
+
 
 export async function getBytesAllowed() {
     return (process.env.MB_ALLOWED || 10000) * 1024 * 1024;
@@ -66,18 +92,6 @@ export const removeCredits = async (userId, creditsToRemove) => {
         user.data.credits = Math.max(0, user.data.credits - creditsToRemove);
         await upsertUser(userId, user.data);
     }
-};
-
-export const upsertUser = async (id, data) => {
-    const query = `
-    INSERT INTO users (id, data)
-    VALUES ($1, $2)
-    ON CONFLICT (id) DO UPDATE
-    SET data = EXCLUDED.data
-    RETURNING *
-  `;
-    const { rows } = await pool.query(query, [id, JSON.stringify(data)]);
-    return rows[0];
 };
 
 

@@ -1,6 +1,5 @@
 import pool from '../config/database.js';
 
-// Create the files table if it doesn't exist
 export const createFileTable = async () => {
   const query = `
     CREATE TABLE IF NOT EXISTS files (
@@ -11,36 +10,26 @@ export const createFileTable = async () => {
       fileHash VARCHAR(255) NOT NULL,
       fileSize BIGINT NOT NULL,
       uploadDate TIMESTAMP NOT NULL,
-      expiresAt TIMESTAMP
+      encryptionData JSONB NOT NULL,
+      lifetimeData JSONB NOT NULL
     );
   `;
   await pool.query(query);
 };
 
 // Insert a new file record and return its ID
-export const insertFile = async (fileId, userId, filename, fileHash, fileSize, uploadDate, expiresAt) => {
+export const insertFile = async (fileId, userId, filename, fileHash, fileSize, uploadDate, encryptionData, lifetimeData) => {
   const query = `
-    INSERT INTO files (fileId, userId, filename, fileHash, fileSize, uploadDate, expiresAt)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO files (fileId, userId, filename, fileHash, fileSize, uploadDate, encryptionData, lifetimeData)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING fileId
   `;
 
   // Convert dates to ISO 8601 strings
   const uploadDateISO = uploadDate ? uploadDate.toISOString() : null;
-  const expiresAtISO = expiresAt ? expiresAt.toISOString() : null;
 
-  const result = await pool.query(query, [fileId, userId, filename, fileHash, fileSize, uploadDateISO, expiresAtISO]);
+  const result = await pool.query(query, [fileId, userId, filename, fileHash, fileSize, uploadDateISO, JSON.stringify(encryptionData), JSON.stringify(lifetimeData)]);
   return result.rows[0].fileId;
-};
-
-// Get expired files
-export const getExpiredFiles = async () => {
-  const now = new Date();
-  const currentDate = now.toISOString();
-
-  const query = 'SELECT * FROM files WHERE expiresAt <= $1';
-  const { rows } = await pool.query(query, [currentDate]);
-  return rows;
 };
 
 // Delete a file record

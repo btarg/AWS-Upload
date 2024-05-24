@@ -10,6 +10,7 @@ import { insertFile } from '../models/fileModel.js';
 import { generateId } from '../routes/linkgenerator.js';
 import { getFullHostname } from '../utils/urls.js';
 import { getIo } from '../config/socket.js';
+import { upsertUserData } from "../models/userModel.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ export const parseAndUpload = async (req) => {
         const fileHash = req.headers['filehash'];
         const fileSize = Number(req.headers['filesize']);
 
+        const dbUser = req.signedCookies.dbUser;
         const userId = dbUser.id;
 
         const form = formidable(options);
@@ -112,16 +114,14 @@ export const parseAndUpload = async (req) => {
                         // add bytes to user
                         addBytes(userId, fileSize);
 
-                        // set expiration date to 7 days from now
-                        const expirationDate = new Date();
-                        expirationDate.setDate(expirationDate.getDate() + 7);
+                        const encryptionData = { encrypted: false, iv: null };
+                        const lifetimeData = { healthPoints: 72 };
 
-
-                        insertFile(fileId, userId, originalFilename, fileHash, fileSize, new Date(), expirationDate)
+                        insertFile(fileId, userId, originalFilename, fileHash, fileSize, new Date(), encryptionData, lifetimeData)
                             .then(() => {
                                 const downloadLink = `${hostname}/download/${fileId}`;
 
-                                emitFileUploaded(dbUser, file.originalFilename, fileSize, expirationDate, downloadLink);
+                                emitFileUploaded(dbUser, file.originalFilename, fileSize, encryptionData, downloadLink);
                                 console.log(`Finished uploading to AWS: ${file.originalFilename}, user ${userId}`);
 
                                 resolve({ downloadLink: downloadLink });
