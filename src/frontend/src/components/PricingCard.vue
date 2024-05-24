@@ -1,5 +1,5 @@
 <template>
-  <div :class="`box-background p-8 rounded-lg w-80 ${cardBorder ? 'border-2 border-purple-500' : ''}`">
+  <div :class="`box-background p-8 rounded-lg w-80 ${borderClass}`">
     <h2 :class="`text-xl font-black ${titleClass}`">{{ title }}
     </h2>
     <p class="light:text-light-primary dark:text-dark-primary text-4xl font-bold mb-4">{{ formatMoney(price) }} <span
@@ -60,10 +60,10 @@ export default {
     maxHourlyUploads: Number,
     totalUploadCap: Number,
     featuresList: Array,
-    cardBorder: Boolean,
     buttonLink: String,
     titleClass: String,
-    iconClass: String
+    iconClass: String,
+    borderClass: String,
   },
   computed: {
     mappedFeatures() {

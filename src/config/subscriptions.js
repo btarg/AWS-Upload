@@ -18,7 +18,7 @@ const totalUploadCaps = {
 
 const maxHourlyUploads = {
     NORMAL: 5,
-    PLUS: 10,
+    PLUS: 15,
     OVERKILL: 25
 };
 
@@ -48,7 +48,7 @@ export const subscriptionPlans = {
     },
     PLUS: {
         title: "PLUS",
-        price: 2.99,
+        price: 5.99,
         description: "For users wanting to upload more than 2TB.",
         maxHourlyUploads: maxHourlyUploads.PLUS,
         totalUploadCap: totalUploadCaps.PLUS,
