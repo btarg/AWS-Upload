@@ -1,6 +1,6 @@
 import express from 'express';
 import { oauth } from '../config/oauth2.js';
-import { getUserByDiscord } from '../models/userModel.js';
+import { getUserByDiscord, upsertDefaultUserData } from '../models/userModel.js';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
@@ -151,23 +151,28 @@ router.get('/callback', rateLimiter, async (req, res) => {
     }
 });
 
-router.get('/user', rateLimiter, checkAuthenticated, async (req, res) => {
+export async function fetchUserData(req) {
     console.log("Fetching user data");
-    try {
-        const discordUser = req.signedCookies.discordUser;
-        let dbUser = req.signedCookies.dbUser;
-        const override = req.query.override === 'true';
+    const discordUser = req.signedCookies.discordUser;
+    let dbUser = req.signedCookies.dbUser;
+    const override = req.query.override === 'true';
 
-        // if we have a valid discord user but no db entry, create a db entry
-        if (!dbUser && discordUser.id || override) {
-            const existingUser = await getUserByDiscord(discordUser.id);
-            if (!existingUser) {
-                console.log('Discord user detected but no DB record. Creating user in database');
-                dbUser = await upsertDefaultUserData(discordUser.id);
-            } else {
-                dbUser = existingUser;
-            }
+    // if we have a valid discord user but no db entry, create a db entry
+    if (!dbUser && discordUser.id || override) {
+        const existingUser = await getUserByDiscord(discordUser.id);
+        if (!existingUser) {
+            console.log('Discord user detected but no DB record. Creating user in database');
+            dbUser = await upsertDefaultUserData(discordUser.id);
+        } else {
+            dbUser = existingUser;
         }
+    }
+    return dbUser;
+}
+
+router.get('/user', rateLimiter, checkAuthenticated, async (req, res) => {
+    try {
+        const dbUser = await fetchUserData(req);
         res.cookie('dbUser', dbUser, { httpOnly: false, signed: true });
         res.json(dbUser);
     } catch (error) {

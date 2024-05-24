@@ -1,7 +1,3 @@
-import prettyBytes from 'pretty-bytes';
-import { numberFromPSQL } from '../../utils/conversions.js';
-
-export function prettyBytesPSQL(bytes) {
-    const converted = numberFromPSQL(bytes);
-    return prettyBytes(converted);
+export function formatMoney(number) {
+    return number.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }

@@ -6,44 +6,39 @@ router.use(cookieParser(process.env.SESSION_SECRET));
 import rateLimit from 'express-rate-limit';
 import express from 'express';
 import { parseAndUpload } from '../services/fileParser.js';
-import { checkAuthenticated } from '../routes/auth.js';
+import { checkAuthenticated, fetchUserData } from '../routes/auth.js';
 import cookieParser from 'cookie-parser';
 import { getFileByHash, emitFileUploaded } from '../services/fileService.js';
 import { getFullHostname } from '../utils/urls.js';
-import { getUserById } from '../models/userModel.js';
 
-const uploadLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 uploads every 15 minutes
-    message: "Too many upload attempts from this IP, please try again after 15 minutes."
-});
+const uploadLimiter = async (req, res, next) => {
+    try {
+        const currentUser = await fetchUserData(req);
+        const userId = currentUser.id;
+        if (!userId) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        console.log(`User id ${userId} has a subscription plan of ${currentUser.data.subscriptionPlan.name}`)
+        const maxHourlyUploads = currentUser.data.subscriptionPlan.maxHourlyUploads || 5;
+        console.log(`User id ${userId} has a max hourly upload limit of ${maxHourlyUploads}`);
+        rateLimit({
+            windowMs: 60 * 60 * 1000, // 1 hour
+            max: maxHourlyUploads,
+            message: "Too many upload attempts from this IP, please try again after 15 minutes."
+        })(req, res, next);
+    } catch (error) {
+        console.error(error.message);
+        return res.status(500).send(req.body);
+    }
+};
 
-router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
+router.post('/', checkAuthenticated, uploadLimiter, async (req, res) => {
     // these are the same headers that will be passed to the parser
     const fileHash = req.headers['filehash'];
     const fileSize = Number(req.headers['filesize']);
 
     const hostname = getFullHostname(req.hostname);
-
-    const discordUser = req.signedCookies.discordUser;
-    const currentUser = req.signedCookies.dbUser;
-    // use the DB user for file id's
-    const userId = currentUser.id;
-
-    if (!userId) {
-        return res.status(404).json({ error: "User not found" });
-    }
-    let dbUser;
-    try {
-        dbUser = await getUserById(userId);
-        if (!dbUser) {
-            console.log("User not found");
-            return res.status(404).json({ error: "User not found" });
-        }
-    } catch (error) {
-        console.log("Error getting user: " + error);
-        return res.status(500).json({ message: "Error getting user" });
-    }
+    const dbUser = await fetchUserData(req);
 
     // Check if a file with the same hash already exists in this guild
     getFileByHash(fileHash)
@@ -76,7 +71,7 @@ router.post('/', uploadLimiter, checkAuthenticated, async (req, res) => {
                 }
 
                 try {
-                    const data = await parseAndUpload(req, dbUser, discordUser);
+                    const data = await parseAndUpload(req);
                     // pass the data directly on success. the json should include downloadLink
                     return res.status(200).json(data);
                 } catch (error) {

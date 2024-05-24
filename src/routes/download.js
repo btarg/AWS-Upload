@@ -8,7 +8,7 @@ import rateLimit from "express-rate-limit";
 
 import { getFileById } from '../services/fileService.js';
 import { getFriendlyFileType, getThumbnailUrl } from '../utils/files.js';
-import { b2Client } from '../config/backblaze.js';
+import { b2Client, Bucket } from '../config/backblaze.js';
 
 const urlCache = new Map();
 
@@ -19,12 +19,11 @@ const limiter = rateLimit({
     message: "Too many requests, please try again later."
 });
 
-export async function getS3URL(userId, fileId, expiresInSeconds = 7200) {
+export async function getS3URL(fileId, expiresInSeconds = 7200) {
     try {
-        const s3key = `${userId}/${fileId}`;
         const command = new GetObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME,
-            Key: s3key
+            Bucket: Bucket,
+            Key: fileId
         });
 
         let signedUrl = urlCache.get(fileId);
@@ -52,7 +51,7 @@ router.get('/:id', limiter, async (req, res) => {
     try {
         const fileId = req.params.id;
         const file = await getFileById(fileId);
-        const signedUrl = await getS3URL(file.userid, fileId);
+        const signedUrl = await getS3URL(fileId);
         const friendlyFileType = await getFriendlyFileType(file.filename);
         const thumbnail = await getThumbnailUrl(file.filename);
 

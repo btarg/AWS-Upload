@@ -1,7 +1,17 @@
 import pool from '../config/database.js';
+import { subscriptionPlans, subscriptionSchema } from '../config/subscriptions.js';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
+import Joi from "joi";
 dotenv.config();
+
+const userDataSchema = Joi.object({
+    discordId: Joi.string().required(),
+    bytesUsed: Joi.number().integer().required(),
+    bytesAllowed: Joi.number().integer().required(),
+    credits: Joi.number().integer().required(),
+    subscriptionPlan: subscriptionSchema.required()
+});
 
 // Create the users table if it doesn't exist
 export const createUserTable = async () => {
@@ -27,8 +37,9 @@ export const upsertUser = async (id, data) => {
 };
 
 export const upsertUserData = async (id, data) => {
-    if (!data.bytesAllowed) {
-        data.bytesAllowed = await getBytesAllowed();
+    const { error } = userDataSchema.validate(data);
+    if (error || !id) {
+        throw new Error(`Invalid user data. ${error.message}`);
     }
     return await upsertUser(id, data);
 };
@@ -36,11 +47,13 @@ export const upsertUserData = async (id, data) => {
 export async function upsertDefaultUserData(discordId) {
     // create new uuid
     const uuid = uuidv4();
+    const bytesAllowed = await getBytesAllowed();
     const dataToInsert = {
         discordId: discordId,
         bytesUsed: 0,
-        bytesAllowed: 0,
-        credits: 0
+        bytesAllowed: bytesAllowed,
+        credits: 0,
+        subscriptionPlan: subscriptionPlans.NORMAL
     }
     return await upsertUserData(uuid, dataToInsert);
 }
@@ -72,8 +85,7 @@ export const getUserById = async (userId) => {
     return null;
 };
 
-
-
+// TODO: update this based on payment plan
 export async function getBytesAllowed() {
     return (process.env.MB_ALLOWED || 10000) * 1024 * 1024;
 };

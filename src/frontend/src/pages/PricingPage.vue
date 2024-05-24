@@ -8,19 +8,11 @@
       </p>
       <h2 class="text-3xl font-bold mb-6 fading-line max-w-4xl mx-auto">Choose a plan that suits you</h2>
       <div class="flex justify-center space-x-6">
-        <PricingCard titleClass="greentext" title="FREE" price="$0" buttonText="Start free"
-          description="A small taster of what we offer"
-          features="5GB Free forever,Total upload cap of 2TB,Upload up to 4 files at a time,Add credits whenever you want">
-        </PricingCard>
-        <PricingCard titleClass="purpletext" title="PLUS" price="$2.99" buttonText="Upgrade"
-          description="For users wanting to upload more than 2TB. Cheaper than the competition"
-          features="Total upload cap of 10TB,Upload up to 10 files at a time,Encrypt your files with AES-GCM and share keys via URLs,Use ShareX to upload files,Choose when links expire,5% off all credit top-ups,Import files from other services"
-          monthly=true cardBorder=true>
-        </PricingCard>
-        <PricingCard titleClass="orangetext" title="OVERKILL" price="$12.99" buttonText="Contact us"
-          description="Great for businesses with large storage needs"
-          features="Total upload cap of 50TB,Upload up to 25 files at a time,10% off all credit top-ups,Priority support"
-          monthly=true>
+        <PricingCard v-for="(plan, key, index) in subscriptionPlans" :key="key"
+          :titleClass="index === 0 ? 'greentext' : index === 1 ? 'purpletext' : 'orangetext'" :title="plan.title"
+          :price="plan.price"
+          :buttonText="plan.title === 'FREE' ? 'Start free' : 'Upgrade'" :description="plan.description"
+          :features="plan.featuresText.join(',')" :monthly="plan.title !== 'FREE'" :cardBorder="plan.title === 'PLUS'">
         </PricingCard>
       </div>
     </main>
@@ -30,25 +22,25 @@
 
 <style>
 .greentext {
-  background: linear-gradient(45deg, rgb(0, 190, 95), rgb(100, 255, 155));
+  background: linear-gradient(to right, #41ff26, #3afff6);
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .purpletext {
-  background: linear-gradient(45deg, #a855f7, #a5a8ff);
+  background: linear-gradient(to right, #2e23ff, #9400dd);
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .orangetext {
-  background: linear-gradient(45deg, #ff7e29, #ffcc29);
+  background: linear-gradient(to right, #ff7e29, #ffcc29);
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .payg-title {
-  background: linear-gradient(45deg, #a855f7, #5255ee);
+  background: linear-gradient(to right, #a855f7, #5255ee);
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -58,6 +50,7 @@
 import PricingCard from '../components/PricingCard.vue';
 import HeaderBar from '../components/HeaderBar.vue';
 import FooterBar from '../components/FooterBar.vue';
+import { subscriptionPlans } from '../../../config/subscriptions.js';
 
 export default {
   components: {
@@ -65,5 +58,10 @@ export default {
     PricingCard,
     FooterBar,
   },
+  data() {
+    return {
+      subscriptionPlans
+    };
+  }
 };
 </script>
