@@ -18,8 +18,20 @@ export default {
 }
 </script>
 <style>
+/* apply tailwind classes */
+@media (prefers-color-scheme: light) {
+  .info-box {
+    @apply bg-light-backgroundSecondary;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .info-box {
+    @apply bg-dark-backgroundSecondary;
+  }
+}
+
+
 .info-box {
-  background-color: rgba(105, 90, 205, 0.25);
   padding: 0.75rem;
   border-radius: 0.5rem;
   display: flex;

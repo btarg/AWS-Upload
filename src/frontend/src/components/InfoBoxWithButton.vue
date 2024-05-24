@@ -2,7 +2,7 @@
     <InfoBox :iconClass="iconClass">
         <div class="flex flex-col items-center gap-y-2">
             <p><slot>Text</slot></p>
-            <IconButton class="text-sm" :href="href">{{ buttonText }} <i class="fa-solid fa-arrow-right"></i>
+            <IconButton class="text-sm" :href="href">{{ buttonText }}<i class="ml-2 fa-solid fa-arrow-right"></i>
             </IconButton>
         </div>
     </InfoBox>

@@ -7,17 +7,19 @@
                 Close <i class="fas fa-times"></i>
             </button>
         </div>
-        <header class="flex items-center justify-between py-6 px-6 sm:px-6 text-xs sm:text-1xl">
-            <div class="flex items-center">
-                <!-- <span class="site-logo text-indigo-500 text-sm sm:text-2lg md:text-3xl lg:text-4xl xl:text-4xl">ByteReserve</span> -->
+        <header class="flex justify-between items-center p-6">
+            <div class="flex items-center space-x-4">
+                <!-- <div class="text-2xl font-bold text-indigo-500">ByteReserve</div> -->
+                <nav class="flex space-x-6 text-white">
+                    <a href="#" class="text-sm sm:text-base">Privacy</a>
+                    <a href="/pricing" class="text-sm sm:text-base">Pricing</a>
+                    <a href="#" class="text-sm sm:text-base">About</a>
+                    <a href="#" class="text-sm sm:text-base">Contact</a>
+                </nav>
             </div>
-            <nav class="flex space-x-2 sm:space-x-6 px-2 sm:px-6">
-                <!-- Navigation links -->
-                <a class="text-sm sm:text-base" href="#">Privacy</a>
-                <a class="text-sm sm:text-base" href="#">Pricing</a>
-                <a class="text-sm sm:text-base" href="#">About</a>
-                <a class="text-sm sm:text-base" href="#">Contact</a>
-            </nav>
+            <div class="flex items-center space-x-4">
+                <LoginButton>Log in</LoginButton>
+            </div>
         </header>
     </div>
 </template>
@@ -40,7 +42,12 @@ button#inline-close:hover {
 }
 </style>
 <script>
+import LoginButton from './LoginButton.vue';
+
 export default {
+    components: {
+        LoginButton,
+    },
     data() {
         return {
             notificationContent: '',

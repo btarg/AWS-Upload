@@ -6,27 +6,24 @@
       <div class="text-white bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg max-w-1xl p-4 mt-4">
         <h1 class="text-4xl font-extrabold">Cheap storage with zero compromises.</h1>
       </div>
-      <p class="text-xl mt-4 glow">We're cheaper than <b>DropBox</b> and <b>OneDrive,</b> with flexible pricing that
-        suits you.</p>
       <!-- Info boxes -->
       <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 max-w-3xl p-2">
 
-          <InfoBoxWithButton iconClass="fas fa-piggy-bank" buttonText="Pricing Info">
-            Pay as you go with <b>credits</b> worth <b>1¢ each.</b> Never pay for more than what you're using.
-          </InfoBoxWithButton>
+        <InfoBoxWithButton href="/pricing" iconClass="fas fa-piggy-bank" buttonText="Pricing Info">
+          Pay as you go with credits worth 1¢ each. Never pay for more than what you're using.
+        </InfoBoxWithButton>
 
-          <InfoBoxWithButton iconClass="fas fa-hourglass-half" buttonText="Learn about File Expiration">
-            Your files won't expire immediately if you run out of credits. You can also set your own expiration date.
-          </InfoBoxWithButton>
+        <InfoBoxWithButton iconClass="fas fa-hourglass-half" buttonText="File Expiration Info">
+          Your files won't expire immediately if you run out of credits. You can also set your own expiration date.
+        </InfoBoxWithButton>
 
-          <InfoBoxWithButton iconClass="fas fa-user-shield" buttonText="Customer Privacy">
-            We don't store <b>any sensitive user data</b> in our database, and we never transfer any sensitive data.
-          </InfoBoxWithButton>
+        <InfoBoxWithButton iconClass="fas fa-user-shield" buttonText="Customer Privacy">
+          We don't store any sensitive user data in our database, or transfer any data to third parties.
+        </InfoBoxWithButton>
 
-          <InfoBoxWithButton href="https://google.com" iconClass="fas fa-lock" buttonText="Customer Privacy">
-            Encrypt your files with <b>AES-GCM</b> when uploading.<br>We don't store the key, and no key is transferred
-            when downloading.
-          </InfoBoxWithButton>
+        <InfoBoxWithButton href="https://google.com" iconClass="fas fa-lock" buttonText="Encryption Info">
+          All files are stored encrypted at rest. With Plus, you can also encrypt your files with AES-GCM when uploading, done entirely client-side.
+        </InfoBoxWithButton>
 
       </div>
       <!-- File count -->
@@ -36,7 +33,7 @@
       </div>
       <!-- Main page buttons -->
       <div class="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 space-x-0 sm:space-x-4">
-        <IconButton href="/auth/login" iconClass="fab fa-discord" :primary="true">Log in with Discord</IconButton>
+        <LoginButton>Log in with Discord</LoginButton>
         <IconButton iconClass="fas fa-dollar-sign">Calculate Price</IconButton>
       </div>
       <div class="text-xl sm:text-2xl md:text-4xl lg:text-4xl font-bold mt-6 fading-line">
@@ -55,6 +52,7 @@
 import HeaderBar from '../components/HeaderBar.vue';
 import InfoBox from '../components/InfoBox.vue';
 import IconButton from '../components/IconButton.vue';
+import LoginButton from '../components/LoginButton.vue';
 import FooterBar from '../components/FooterBar.vue';
 import InfoBoxWithButton from '../components/InfoBoxWithButton.vue';
 
@@ -63,6 +61,7 @@ export default {
     InfoBox,
     InfoBoxWithButton,
     IconButton,
+    LoginButton,
     HeaderBar,
     FooterBar
   },

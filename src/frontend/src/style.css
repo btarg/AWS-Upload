@@ -26,7 +26,7 @@ body::before {
   background-size: cover;
   z-index: -1;
   opacity: 0.15;
-  filter: blur(0.75rem) brightness(125%);
+  filter: blur(0.75rem);
 }
 
 h1 {
@@ -39,7 +39,6 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -106,5 +105,5 @@ a:hover {
   height: 2px;
   width: 100%;
   background: linear-gradient(to right, transparent, #9295f7, transparent);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }

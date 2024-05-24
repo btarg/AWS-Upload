@@ -13,7 +13,7 @@
 :root {
     --light-buttonPrimary: #b392f0;
     --dark-buttonPrimary: #7e22ce;
-    --light-gradient: linear-gradient(#ffffff00, #b392f0);
+    --light-gradient: linear-gradient(#ffffff00, #cfb5ffd8);
     --dark-gradient: linear-gradient(#ffffff00, #7e22ce);
 }
 
@@ -94,9 +94,7 @@ export default {
                 'items-center',
                 'rounded-lg',
                 'px-4',
-                'sm:px-6',
-                'py-1',
-                'sm:py-2',
+                'py-2',
                 this.primary ? 'text-light-buttonTextPrimary dark:text-dark-buttonTextPrimary bg-light-buttonPrimary dark:bg-dark-buttonPrimary' : 'text-light-buttonTextSecondary dark:text-dark-buttonTextSecondary bg-light-secondaryButton dark:bg-dark-secondaryButton'
             ];
         }
