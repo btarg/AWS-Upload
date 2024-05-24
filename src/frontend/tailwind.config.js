@@ -7,7 +7,7 @@ export default {
     extend: {
       colors: {
         'light': {
-          'background': '#f9fafb', // light gray for background
+          'background': '#f6f2ff', // light gray for background
           'primary': '#1f2937', // dark gray for primary text
           'secondary': '#4F46E5', // indigo for secondary text
           'muted': 'dimgray', // gray for muted text
@@ -17,7 +17,7 @@ export default {
           'buttonTextSecondary': 'rgb(129 140 248 / var(--tw-text-opacity))', // indigo for secondary button text
         },
         'dark': {
-          'background': 'rgb(30, 30, 35)', // dark blue for background
+          'background': '#0d091d', // dark blue for background
           'primary': 'whitesmoke', // white for primary text
           'secondary': '#4F46E5', // indigo for secondary text
           'muted': 'whitesmoke', // gray for muted text

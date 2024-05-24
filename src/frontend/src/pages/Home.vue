@@ -20,7 +20,7 @@
         <InfoBox iconClass="fas fa-hourglass-half">
           <div class="flex flex-col items-center gap-y-2">
             <p>Your files won't expire immediately if you run out of credits.</p>
-            <IconButton class="text-sm">File Decay <i class="fa-solid fa-arrow-right"></i></IconButton>
+            <IconButton class="text-sm">Learn about File Decay <i class="fa-solid fa-arrow-right"></i></IconButton>
           </div>
         </InfoBox>
         <InfoBox iconClass="fas fa-user-shield">
@@ -31,7 +31,7 @@
         </InfoBox>
       </div>
       <!-- File count -->
-      <div class="text-xl mt-4">
+      <div class="text-xl mt-4 glow">
         No passwords required; just log in with your Discord account.<br>
         You'll get <b>5GB</b> of storage, free forever.
       </div>

@@ -71,6 +71,9 @@ a:hover {
   :root {
     @apply text-light-primary bg-light-background;
   }
+  div.glow {
+    text-shadow: 0 0 10px rgba(100, 108, 255, 0.25);
+  }
   button {
     @apply bg-light-buttonSecondary border border-indigo-500 border-opacity-50;
   }
@@ -82,6 +85,9 @@ a:hover {
 @media (prefers-color-scheme: dark) {
   :root {
     @apply text-dark-primary bg-dark-background;
+  }
+  div.glow {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
   }
   button {
     @apply bg-dark-buttonSecondary border border-indigo-500 border-opacity-50;
