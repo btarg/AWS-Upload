@@ -26,7 +26,7 @@ export const subscriptionFeatures = {
     "FREE_5GB": "5GB of storage, free forever",
     "FREE_10GB": "10GB of storage, free forever",
     "FREE_15GB": "15GB of storage, free forever",
-    "AES_GCM": "Encrypt your files with AES-GCM and share keys via URLs",
+    "AES_GCM": "AES-GCM File Encryption",
     "SHAREX": "Use ShareX to upload files",
     "CONTROL_EXPIRY": "Choose when links expire",
     "IMPORT": "Import files from other services",
