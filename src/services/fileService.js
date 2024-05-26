@@ -39,11 +39,11 @@ export async function isFileIdUsed(fileId) {
 }
 export const decreaseHealthPointsAndRemoveDecayedFiles = async () => {
     // Decrease health points for all files
-    let query = 'UPDATE files SET lifetimeData = jsonb_set(lifetimeData, \'{healthPoints}\', ((lifetimeData->>\'healthPoints\')::int - 1)::text::jsonb)';
+    let query = 'UPDATE files SET healthPoints = (healthPoints::int - 1)::text';
     await pool.query(query);
 
     // Remove decayed files
-    query = 'DELETE FROM files WHERE (lifetimeData->>\'healthPoints\')::int <= 0';
+    query = 'DELETE FROM files WHERE healthPoints::int <= 0';
     const { rows } = await pool.query(query);
     return rows;
 };

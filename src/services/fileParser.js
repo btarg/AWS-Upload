@@ -106,9 +106,9 @@ export const parseAndUpload = async (req) => {
                         addBytes(userId, fileSize);
 
                         const encryptionData = { encrypted: false, iv: null };
-                        const lifetimeData = { healthPoints: 72 };
+                        const healthPoints = 72;
 
-                        insertFile(fileId, userId, originalFilename, fileHash, fileSize, new Date(), encryptionData, lifetimeData)
+                        insertFile(fileId, userId, originalFilename, fileHash, fileSize, new Date(), encryptionData, healthPoints)
                             .then(() => {
                                 const downloadLink = `${hostname}/download/${fileId}`;
 

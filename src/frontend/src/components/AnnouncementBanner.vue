@@ -44,7 +44,7 @@ export default {
             this.showNotification = false;
         },
         fetchContent() {
-            fetch('/banner')
+            fetch('/api/banner')
                 .then(response => {
                     const contentType = response.headers.get('content-type');
                     if (!response.ok || !contentType || !contentType.includes('text/plain')) {

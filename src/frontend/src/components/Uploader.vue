@@ -1,26 +1,39 @@
 <template>
-  <!-- ... -->
   <div id="dropzone" class="dropzone"></div>
-  <!-- ... -->
+  <!-- upload button -->
+  <button @click="dropzone.processQueue()" :disabled="uploading">Upload</button>
 </template>
 
 <script>
+import { ref } from 'vue';
 import Dropzone from "dropzone";
 import "dropzone/dist/dropzone.css";
 
 export default {
+  setup() {
+    const uploading = ref(false);
+    return {
+      uploading,
+    };
+  },
   data() {
     return {
       dropzone: null,
+      maxFileSize: null,
     };
   },
-  mounted() {
+  async mounted() {
+    const vm = this;
+    const response = await fetch('/api/config');
+    const config = await response.json();
+    this.maxFileSize = config.maxFileSize / (1024 * 1024); // Convert to MB
+
     this.dropzone = new Dropzone("#dropzone", {
-      url: "/putfile",
+      url: "/api/putfile",
       maxFilesize: process.env.MB_MAX / (1024 * 1024), // in MB
       maxFiles: 5, // Limit the number of files that can be dropped at once
       headers: {},
-      autoProcessQueue: true,
+      autoProcessQueue: false,
       init: function () {
         this.on("addedfile", (file) => {
           // Calculate the file hash
@@ -42,29 +55,27 @@ export default {
             } else {
               console.error(`Invalid file size for file ${file.name}`);
             }
-            this.processFile(file); // Process the file after the hash has been calculated
           };
           reader.readAsArrayBuffer(file);
         });
         this.on("sending", (file, xhr, formData) => {
+          vm.uploading = true;
           xhr.setRequestHeader("filehash", file.fileHash);
           xhr.setRequestHeader("filesize", file.fileSize);
-        });
-
-        this.on("uploadprogress", (file, progress) => {
-          // console.log('Upload progress:', progress);
         });
         this.on("success", (file, response) => {
           if (!response.error) {
             const downloadLink = response.downloadLink;
-            console.log(`File uploaded successfully. Download link: ${downloadLink}`);
+            console.log(`${file.name} uploaded successfully. Download: ${downloadLink}`);
           } else {
             // alert the error
             console.log(response.error.message);
           }
+          vm.uploading = false;
         });
         this.on("queuecomplete", () => {
           console.log('All files have been uploaded.');
+          vm.uploading = false;
         });
         this.on("error", (file, errorMessage) => {
           console.log(`Error uploading file ${file.name}: ${errorMessage}`);

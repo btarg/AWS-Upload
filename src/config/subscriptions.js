@@ -4,7 +4,6 @@ export const subscriptionSchema = Joi.object({
     // title, price, description, features
     title: Joi.string().required(),
     price: Joi.number().required(),
-    description: Joi.string().required(),
     maxHourlyUploads: Joi.number().required(),
     totalUploadCap: Joi.number().required(),
     features: Joi.array().items(Joi.string()).required()
@@ -22,6 +21,11 @@ const maxHourlyUploads = {
     OVERKILL: 25
 };
 
+export const planDescriptions = {
+    NORMAL: "A small taster of what we offer. Start with 5GB of storage and top up with credits.",
+    PLUS: "For users wanting to upload more than 2TB.",
+    OVERKILL: "Great for businesses who need to securely store large amounts of data."
+}
 export const subscriptionFeatures = {
     "FREE_5GB": "5GB of storage, free forever",
     "FREE_10GB": "10GB of storage, free forever",
@@ -36,12 +40,15 @@ export const subscriptionFeatures = {
 export const getMappedFeatures = (features) => {
     return features.map(feature => subscriptionFeatures[feature]);
 }
+export const getDescription = (plan) => {
+    return planDescriptions[plan];
+}
 
 export const subscriptionPlans = {
+    // The title and key need to be the same for other functions to read them properly
     NORMAL: {
         title: "FREE",
         price: 0,
-        description: "A small taster of what we offer. Start with 5GB of storage and top up with credits.",
         maxHourlyUploads: maxHourlyUploads.NORMAL,
         totalUploadCap: totalUploadCaps.NORMAL,
         features:["FREE_5GB"]
@@ -49,7 +56,6 @@ export const subscriptionPlans = {
     PLUS: {
         title: "PLUS",
         price: 5.99,
-        description: "For users wanting to upload more than 2TB.",
         maxHourlyUploads: maxHourlyUploads.PLUS,
         totalUploadCap: totalUploadCaps.PLUS,
         features: [
@@ -64,7 +70,6 @@ export const subscriptionPlans = {
     OVERKILL: {
         title: "OVERKILL",
         price: 12.99,
-        description: "Great for businesses who need to securely store large amounts of data.",
         maxHourlyUploads: maxHourlyUploads.OVERKILL,
         totalUploadCap: totalUploadCaps.OVERKILL,
         features: [

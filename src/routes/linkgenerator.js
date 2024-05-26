@@ -1,5 +1,4 @@
 import { randomBytes } from 'crypto';
-import { getFullHostname } from '../utils/urls.js';
 
 // Function to generate a unique ID 11 characters url safe
 export function generateId() {
@@ -9,9 +8,4 @@ export function generateId() {
         .replace(/&/g, '')
         .replace(/\?/g, '')
         .replace(/=/g, '');
-}
-
-export function createUploadLink(guildId, channelId, userId, isDM = false) {
-    const hostname = getFullHostname(process.env.HOSTNAME || "localhost");
-    return `${hostname}/?guild=${guildId}&channel=${channelId}&isDM=${isDM}`;
 }

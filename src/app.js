@@ -35,15 +35,15 @@ import { getFullHostname } from './utils/urls.js';
         cookie: { secure: isHttps }
     }));
 
-    app.use('/auth', authRoutes);
-    app.use('/putfile', uploadRoutes);
-    app.use('/delete', deleteRoutes);
-    app.use('/download', downloadRoutes);
-    app.use('/list', listRoutes);
-    app.use('/discord', discordRoutes);
-    app.use('/config', configRoutes);
+    app.use('/api/auth', authRoutes);
+    app.use('/api/putfile', uploadRoutes);
+    app.use('/api/delete', deleteRoutes);
+    app.use('/api/download', downloadRoutes);
+    app.use('/api/list', listRoutes);
+    app.use('/api/discord', discordRoutes);
+    app.use('/api/config', configRoutes);
 
-    app.get('/banner', (req, res) => {
+    app.get('/api/banner', (req, res) => {
         res.sendFile(join(__dirname, 'banner.txt'));
     });
 

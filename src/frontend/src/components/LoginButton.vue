@@ -1,5 +1,5 @@
 <template>
-    <IconButton href="/auth/login" iconClass="fab fa-discord" :primary="true"><slot></slot></IconButton>
+    <IconButton href="/api/auth/login" iconClass="fab fa-discord" :primary="true"><slot></slot></IconButton>
 </template>
 
 <script>

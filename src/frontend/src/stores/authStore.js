@@ -10,19 +10,19 @@ export const useAuthStore = defineStore('auth', {
     actions: {
         logIn() {
             // Store the current URL in the session and redirect to the login page
-            fetch('/auth/storeRedirect', {
+            fetch('/api/auth/storeRedirect', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ redirect: window.location.href })
             }).then(() => {
-                window.location.href = '/auth/login';
+                window.location.href = '/api/auth/login';
             });
         },
 
         logOut() {
-            fetch("/auth/logout")
+            fetch("/api/auth/logout")
                 .then((response) => {
                     if (!response.ok) {
                         this.resetUser();
@@ -49,7 +49,7 @@ export const useAuthStore = defineStore('auth', {
                     }
                 } else {
                     // Fetch the Discord user data
-                    fetch("/discord/user")
+                    fetch("/api/discord/user")
                         .then((response) => response.json())
                         .then((discordUserData) => {
                             this.discordUser = discordUserData;
@@ -83,7 +83,7 @@ export const useAuthStore = defineStore('auth', {
                         this.resetUser();
                     }
                 } else {
-                    const authEndpoint = override ? "/auth/user?override=true" : "/auth/user";
+                    const authEndpoint = override ? "/api/auth/user?override=true" : "/api/auth/user";
                     fetch(authEndpoint)
                         .then((response) => {
                             if (!response.ok) {
@@ -99,7 +99,7 @@ export const useAuthStore = defineStore('auth', {
                                 resolve(dbUserData);
                             } else {
                                 this.resetUser();
-                                reject(new Error("No user data returned from /auth/user"));
+                                reject(new Error("No user data returned from /api/auth/user"));
                             }
                         })
                         .catch((error) => {

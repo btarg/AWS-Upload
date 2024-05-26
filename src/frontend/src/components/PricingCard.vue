@@ -53,7 +53,7 @@
 import { formatMoney } from '../util.js';
 import IconButton from './IconButton.vue';
 import prettyBytes from 'pretty-bytes';
-import { getMappedFeatures } from '../../../config/subscriptions.js';
+import { getMappedFeatures, getDescription } from '../../../config/subscriptions.js';
 
 export default {
   components: {
@@ -76,6 +76,9 @@ export default {
   computed: {
     mappedFeatures() {
       return getMappedFeatures(this.featuresList); // Use getMappedFeatures to map featuresList
+    },
+    mappedDescription() {
+      return getDescriptionFromPlan(this.title);
     }
   },
   methods: {

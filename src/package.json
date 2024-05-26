@@ -19,7 +19,6 @@
     "@aws-sdk/s3-request-presigner": "^3.577.0",
     "cookie-parser": "^1.4.6",
     "discord-oauth2": "^2.12.1",
-    "discord.js": "^14.15.2",
     "dotenv": "^16.4.5",
     "events": "^3.3.0",
     "express": "^4.19.2",
