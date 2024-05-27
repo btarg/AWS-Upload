@@ -2,7 +2,6 @@ import express from 'express';
 import { getAllUsers } from '../models/userModel.js';
 import { adminAuth } from './admin.js';
 import pool from '../config/database.js';
-
 const router = express.Router();
 
 

@@ -97,7 +97,7 @@ router.get('/refresh', rateLimiter, checkAuthenticated, async (req, res) => {
 });
 
 router.get('/login', rateLimiter, (req, res) => {
-    const redirectUri = `${req.protocol}://${req.get('host')}/api/authcallback`;
+    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
     if (req.signedCookies.dbUser && req.signedCookies.discordUser) {
         // If the user is already authenticated, redirect to the redirectUri
         res.redirect(redirectUri);
@@ -123,7 +123,7 @@ router.get('/callback', rateLimiter, async (req, res) => {
             code: code,
             scope: "identify",
             grantType: "authorization_code",
-            redirectUri: `${req.protocol}://${req.get('host')}/api/authcallback`
+            redirectUri: `${req.protocol}://${req.get('host')}/api/auth/callback`
         });
         const oauthDiscordUser = await oauth.getUser(token.access_token);
         // if user is not verified then throw an error and stop trying to log in.

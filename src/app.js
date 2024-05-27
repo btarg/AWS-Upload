@@ -5,14 +5,13 @@ const __dirname = dirname(__filename);
 
 import express from 'express';
 import session from 'express-session';
-import http from 'http';
-import { initializeSocket } from './config/socket.js';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import uploadRoutes from './routes/upload.js';
 import deleteRoutes from './routes/delete.js';
 import downloadRoutes from './routes/download.js';
 import listRoutes from './routes/list.js';
+import folderRoutes from './routes/folders.js';
 import discordRoutes from './routes/discord.js';
 import configRoutes from './routes/getconfig.js';
 import { initializeDatabase } from './config/dbinit.js';
@@ -21,8 +20,6 @@ import { getFullHostname } from './utils/urls.js';
 (async () => {
     dotenv.config();
     const app = express();
-    const server = http.createServer(app);
-    await initializeSocket(server);
     await initializeDatabase();
     app.set('trust proxy', 1);
     app.use(express.json());
@@ -35,17 +32,20 @@ import { getFullHostname } from './utils/urls.js';
         cookie: { secure: isHttps }
     }));
 
+    // API endpoints
     app.use('/api/auth', authRoutes);
     app.use('/api/putfile', uploadRoutes);
     app.use('/api/delete', deleteRoutes);
-    app.use('/api/download', downloadRoutes);
     app.use('/api/list', listRoutes);
+    app.use('/api/folders', folderRoutes);
     app.use('/api/discord', discordRoutes);
     app.use('/api/config', configRoutes);
-
     app.get('/api/banner', (req, res) => {
         res.sendFile(join(__dirname, 'banner.txt'));
     });
+
+    // User facing
+    app.use('/download', downloadRoutes);
 
     app.use(express.static(join(__dirname, 'frontend', 'dist')));
     app.get('*', (req, res) => {
@@ -54,7 +54,7 @@ import { getFullHostname } from './utils/urls.js';
 
     const PORT = process.env.PORT || 3000;
     const hostname = getFullHostname();
-    server.listen(PORT, () => {
+    app.listen(PORT, () => {
         console.log(`Server started at ${hostname}`);
     });
 

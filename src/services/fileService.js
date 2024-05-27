@@ -6,6 +6,40 @@ import pool from '../config/database.js';
 
 export const eventEmitter = new events.EventEmitter();
 
+export async function getParentFolderNames(fileId) {
+    const query = `
+        WITH RECURSIVE parent_folders AS (
+            SELECT id, name, parent_folder_id, userId
+            FROM folders
+            WHERE (id, userId) = (
+                SELECT folderId, userId
+                FROM files
+                WHERE fileId = $1
+            )
+            UNION ALL
+            SELECT f.id, f.name, f.parent_folder_id, f.userId
+            FROM folders f
+            INNER JOIN parent_folders pf ON f.id = pf.parent_folder_id AND f.userId = pf.userId
+        )
+        SELECT array_agg(name ORDER BY id) as names
+        FROM parent_folders;
+    `;
+    const { rows } = await pool.query(query, [fileId]);
+    return rows[0]?.names || [];
+}
+
+export const getAllFilesInFolder = (folderId) => {
+    return new Promise((resolve, reject) => {
+        pool.query('SELECT * FROM files WHERE folderId = $1', [folderId], (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results.rows);
+            }
+        });
+    });
+}
+
 export const getFileByHash = (fileHash) => {
     return new Promise((resolve, reject) => {
         pool.query('SELECT * FROM files WHERE fileHash = $1', [fileHash], (error, results) => {

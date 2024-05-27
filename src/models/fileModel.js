@@ -11,24 +11,34 @@ export const createFileTable = async () => {
       fileSize BIGINT NOT NULL,
       uploadDate TIMESTAMP NOT NULL,
       encryptionData JSONB NOT NULL,
-      healthPoints VARCHAR(255) NOT NULL
+      healthPoints VARCHAR(255) NOT NULL,
+      folderId VARCHAR(255),
+      FOREIGN KEY (folderId) REFERENCES folders(id)
     );
   `;
   await pool.query(query);
 };
 
+
 // Insert a new file record and return its ID
-export const insertFile = async (fileId, userId, filename, fileHash, fileSize, uploadDate, encryptionData, healthPoints) => {
+export const insertFile = async (fileId, userId, filename, fileHash, fileSize, uploadDate, encryptionData, healthPoints, folderId) => {
   const query = `
-    INSERT INTO files (fileId, userId, filename, fileHash, fileSize, uploadDate, encryptionData, healthPoints)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    INSERT INTO files (fileId, userId, filename, fileHash, fileSize, uploadDate, encryptionData, healthPoints, folderId)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING fileId
   `;
 
   // Convert dates to ISO 8601 strings
-  const uploadDateISO = uploadDate ? uploadDate.toISOString() : null;
+  let uploadDateISO;
+  try {
+    uploadDateISO = uploadDate ? uploadDate.toISOString() : null;
+  } catch (error) {
+    console.error('Error converting date to ISO 8601 string:', error);
+    uploadDateISO = null;
+  }
+  
 
-  const result = await pool.query(query, [fileId, userId, filename, fileHash, fileSize, uploadDateISO, JSON.stringify(encryptionData), healthPoints]);  // Removed JSON.stringify from healthPoints
+  const result = await pool.query(query, [fileId, userId, filename, fileHash, fileSize, uploadDateISO, JSON.stringify(encryptionData), healthPoints, folderId]);
   return result.rows[0].fileId;
 };
 

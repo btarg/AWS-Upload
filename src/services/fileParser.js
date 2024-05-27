@@ -8,7 +8,8 @@ import { addBytes } from '../models/userModel.js';
 import { insertFile } from '../models/fileModel.js';
 import { generateId } from '../routes/linkgenerator.js';
 import { getFullHostname } from '../utils/urls.js';
-import { getIo } from '../config/socket.js';
+
+import { getOrCreateFolders } from '../services/folderService.js';
 
 dotenv.config();
 
@@ -19,9 +20,6 @@ export const parseAndUpload = async (req) => {
             allowEmptyFiles: false,
             hashAlgorithm: 'sha1'
         }
-
-        const io = getIo();
-
         const fileHash = req.headers['filehash'];
         const fileSize = Number(req.headers['filesize']);
 
@@ -32,6 +30,18 @@ export const parseAndUpload = async (req) => {
 
         const hostname = getFullHostname(req.hostname);
         const fileId = generateId();
+
+        const folderString = req.headers['folder'];
+        
+        let folderId;
+        try {
+            folderId = await getOrCreateFolders(folderString, dbUser.id);
+            console.log("Folder ID: " + folderId);
+        } catch (error) {
+            console.error('Error getting or creating folders:', error);
+            folderId = null;
+        }
+
 
         // this will be set later
         let originalFilename;
@@ -50,22 +60,6 @@ export const parseAndUpload = async (req) => {
             reject({ error: error.message, statusCode: 500 })
             return;
         })
-
-        let lastEmittedProgress = 0;
-
-        form.on('progress', (bytesReceived, bytesExpected) => {
-            const progressPercentage = Math.round(bytesReceived / bytesExpected * 100); // Calculate the progress as a percentage and round it to the nearest whole number
-
-            if (progressPercentage !== lastEmittedProgress) {
-                if (!io) {
-                    console.error('Socket.io not initialized');
-                } else {
-                    // Emit a 'progress' event with the calculated progress
-                    io.emit('uploadProgress', { progress: progressPercentage });
-                    lastEmittedProgress = progressPercentage;
-                }
-            }
-        });
 
         form.on('fileBegin', (formName, file) => {
             originalFilename = file.originalFilename;
@@ -108,7 +102,7 @@ export const parseAndUpload = async (req) => {
                         const encryptionData = { encrypted: false, iv: null };
                         const healthPoints = 72;
 
-                        insertFile(fileId, userId, originalFilename, fileHash, fileSize, new Date(), encryptionData, healthPoints)
+                        insertFile(fileId, userId, originalFilename, fileHash, fileSize, new Date(), encryptionData, healthPoints, folderId)
                             .then(() => {
                                 const downloadLink = `${hostname}/download/${fileId}`;
 

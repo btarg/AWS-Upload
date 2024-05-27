@@ -18,7 +18,7 @@ const uploadLimiter = async (req, res, next) => {
         if (!userId) {
             return res.status(404).json({ error: "User not found" });
         }
-        console.log(`User id ${userId} has a subscription plan of ${currentUser.data.subscriptionPlan.name}`)
+        console.log(`User id ${userId} has a subscription plan of ${currentUser.data.subscriptionPlan.title}`)
         const maxHourlyUploads = currentUser.data.subscriptionPlan.maxHourlyUploads || 5;
         console.log(`User id ${userId} has a max hourly upload limit of ${maxHourlyUploads}`);
         rateLimit({
@@ -39,13 +39,13 @@ router.post('/', checkAuthenticated, uploadLimiter, async (req, res) => {
 
     const hostname = getFullHostname(req.hostname);
     const dbUser = await fetchUserData(req);
-
+    
     // Check if a file with the same hash already exists in this guild
     getFileByHash(fileHash)
         .then(async existingFile => {
             if (existingFile) {
                 // If the file already exists, return the original copy
-                const downloadLink = `${hostname}/download/${existingFile.fileid}`; // remember, no capitals here
+                const downloadLink = `${hostname}/api/download/${existingFile.fileid}`; // remember, no capitals here
                 console.log("Existing download link: " + downloadLink);
                 emitFileUploaded(dbUser, existingFile.filename, fileSize, existingFile.expiresat, downloadLink);
                 return res.status(200).json({ message: 'File already exists', downloadLink: downloadLink });

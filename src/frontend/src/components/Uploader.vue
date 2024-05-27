@@ -2,6 +2,8 @@
   <div id="dropzone" class="dropzone"></div>
   <!-- upload button -->
   <button @click="dropzone.processQueue()" :disabled="uploading">Upload</button>
+  <!-- text box for folder structure e.g. coolfiles/coolerfiles/ -->
+  <input type="text" v-model="folder" placeholder="Folder structure" />
 </template>
 
 <script>
@@ -20,6 +22,7 @@ export default {
     return {
       dropzone: null,
       maxFileSize: null,
+      folder: '',
     };
   },
   async mounted() {
@@ -60,6 +63,7 @@ export default {
         });
         this.on("sending", (file, xhr, formData) => {
           vm.uploading = true;
+          xhr.setRequestHeader("folder", vm.folder)
           xhr.setRequestHeader("filehash", file.fileHash);
           xhr.setRequestHeader("filesize", file.fileSize);
         });
@@ -77,8 +81,9 @@ export default {
           console.log('All files have been uploaded.');
           vm.uploading = false;
         });
+
         this.on("error", (file, errorMessage) => {
-          console.log(`Error uploading file ${file.name}: ${errorMessage}`);
+          console.log(`Error uploading file ${file.name}: ${JSON.stringify(errorMessage)}`);
         });
       },
     });
