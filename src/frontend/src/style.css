@@ -22,7 +22,7 @@ body::before {
   right: 0;
   bottom: 0;
   left: 0;
-  background: url('https://www.gamespot.com/a/uploads/screen_kubrick/1601/16018044/3976397-ps2-startup.jpg') no-repeat center center fixed;
+  /* background: url('https://www.gamespot.com/a/uploads/screen_kubrick/1601/16018044/3976397-ps2-startup.jpg') no-repeat center center fixed; */
   background-size: cover;
   z-index: -1;
   opacity: 0.15;
@@ -105,5 +105,5 @@ a:hover {
   height: 2px;
   width: 100%;
   background: linear-gradient(to right, transparent, #9295f7, transparent);
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 }

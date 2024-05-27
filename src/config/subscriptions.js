@@ -32,7 +32,7 @@ export const subscriptionFeatures = {
     "FREE_15GB": "15GB of storage, free forever",
     "AES_GCM": "AES-GCM File Encryption",
     "SHAREX": "Use ShareX to upload files",
-    "CONTROL_EXPIRY": "Choose when links expire",
+    "CONTROL_EXPIRY": "Create temporary links",
     "IMPORT": "Import files from other services",
     "DISCOUNT_5": "5% off all credit top-ups",
     "DISCOUNT_10": "10% off all credit top-ups"
@@ -55,7 +55,7 @@ export const subscriptionPlans = {
     },
     PLUS: {
         title: "PLUS",
-        price: 5.99,
+        price: 4.99,
         maxHourlyUploads: maxHourlyUploads.PLUS,
         totalUploadCap: totalUploadCaps.PLUS,
         features: [

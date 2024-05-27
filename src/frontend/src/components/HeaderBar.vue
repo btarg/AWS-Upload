@@ -4,6 +4,7 @@
             <div class="flex items-center space-x-4">
                 <!-- <div class="text-2xl font-bold text-indigo-500">ByteReserve</div> -->
                 <nav class="flex space-x-6 text-white">
+                    <a href="/" class="text-sm sm:text-base">Home</a>
                     <a href="#" class="text-sm sm:text-base">Privacy</a>
                     <a href="/pricing" class="text-sm sm:text-base">Pricing</a>
                     <a href="#" class="text-sm sm:text-base">About</a>

@@ -1,72 +1,148 @@
 <template>
   <div class="home max-w-none">
-    <AnnouncementBanner />
-    <HeaderBar />
-    <main class="flex flex-col items-center justify-center text-center mx-auto mb-10">
-      <!-- Header box -->
-      <div class="text-white bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg max-w-1xl p-4 mt-4">
-        <h1 class="text-4xl font-extrabold">Cheap storage with zero compromises.</h1>
+    <nav class="dot-navigation">
+      <ul>
+        <li v-for="(section, index) in sections" :key="index" :class="{ active: isActiveSection(index) }"
+          @click="scrollToSection(index)"></li>
+      </ul>
+    </nav>
+    <div class="sticky top-0 z-50">
+      <AnnouncementBanner />
+      <HeaderBar />
+    </div>
+
+    <div class="flex flex-col">
+      <div ref="section0" class="full-screen-section">
+        <HomeSection1 />
       </div>
-      <!-- Info boxes -->
-      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 max-w-3xl p-2">
-
-        <InfoBoxWithButton href="/pricing" iconClass="fas fa-piggy-bank" buttonText="Pricing Info">
-          Pay as you go with credits worth 1¢ each. Never pay for more than what you're using.
-        </InfoBoxWithButton>
-
-        <InfoBoxWithButton iconClass="fas fa-hourglass-half" buttonText="File Expiration Info">
-          Your files won't expire immediately if you run out of credits. You can also set your own expiration date.
-        </InfoBoxWithButton>
-
-        <InfoBoxWithButton iconClass="fas fa-user-shield" buttonText="Customer Privacy">
-          We don't store any sensitive user data in our database, or transfer any data to third parties.
-        </InfoBoxWithButton>
-
-        <InfoBoxWithButton href="https://google.com" iconClass="fas fa-lock" buttonText="Encryption Info">
-          All files are stored encrypted at rest. With Plus, you can also encrypt your files with AES-GCM when uploading, done entirely client-side.
-        </InfoBoxWithButton>
-
+      <div ref="section1" class="full-screen-section">
+        <HomeSection2 />
       </div>
-      <!-- File count -->
-      <div class="text-xl mt-4 glow">
-        No passwords required; just log in with your Discord account.<br>
-        You'll get <b>5GB</b> of storage, free forever.
-      </div>
-      <!-- Main page buttons -->
-      <div class="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 space-x-0 sm:space-x-4">
-        <LoginButton>Log in with Discord</LoginButton>
-        <IconButton iconClass="fas fa-dollar-sign">Calculate Price</IconButton>
-      </div>
-      <div class="text-xl sm:text-2xl md:text-4xl lg:text-4xl font-bold mt-6 fading-line">
-        <span>Proudly serving <span
-            class="text-white bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg p-1 sm:p-2">420,69,777</span>
-          files</span>
-      </div>
+    </div>
 
-    </main>
+    <div class="mt-20">
+      <FooterBar></FooterBar>
+    </div>
   </div>
-  <FooterBar></FooterBar>
 </template>
 
 
 <script>
 import HeaderBar from '../components/HeaderBar.vue';
 import AnnouncementBanner from '../components/AnnouncementBanner.vue';
-import InfoBox from '../components/InfoBox.vue';
-import IconButton from '../components/IconButton.vue';
 import LoginButton from '../components/LoginButton.vue';
 import FooterBar from '../components/FooterBar.vue';
+import HomeSection1 from './HomeSection1.vue';
+import HomeSection2 from './HomeSection2.vue';
+
 import InfoBoxWithButton from '../components/InfoBoxWithButton.vue';
 
 export default {
   components: {
-    InfoBox,
-    InfoBoxWithButton,
-    IconButton,
+    HomeSection1,
+    HomeSection2,
     LoginButton,
+    InfoBoxWithButton,
     AnnouncementBanner,
     HeaderBar,
-    FooterBar
+    FooterBar,
+  },
+  data() {
+    return {
+      sections: ['section0', 'section1'],
+      currentActiveIndex: 0
+    };
+  },
+  methods: {
+    scrollToSection(index) {
+      try {
+        if (index === 0) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          const sectionRef = this.$refs[this.sections[index]];
+          if (sectionRef) {
+            sectionRef.scrollIntoView({ behavior: 'smooth' });
+          } else {
+            console.error(`No ref found for section ${this.sections[index]}`);
+          }
+        }
+        this.currentActiveIndex = index;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    isActiveSection(index) {
+      return index === this.currentActiveIndex;
+    },
+    onWheel(e) {
+      e.preventDefault();
+      if (e.deltaY > 0) {
+        this.scrollToSection(Math.min(this.currentActiveIndex + 1, this.sections.length - 1));
+      } else {
+        this.scrollToSection(Math.max(this.currentActiveIndex - 1, 0));
+      }
+    },
+    onKeydown(e) {
+      switch (e.code) {
+        case 'ArrowUp':
+        case 'PageUp':
+          this.scrollToSection(Math.max(this.currentActiveIndex - 1, 0));
+          break;
+        case 'ArrowDown':
+        case 'PageDown':
+          this.scrollToSection(Math.min(this.currentActiveIndex + 1, this.sections.length - 1));
+          break;
+      }
+    },
+  },
+
+  mounted() {
+    window.addEventListener('wheel', this.onWheel, { passive: false });
+    window.addEventListener('keydown', this.onKeydown);
+    this.scrollToSection(this.currentActiveIndex);
+  },
+
+  beforeDestroy() {
+    window.removeEventListener('wheel', this.onWheel);
+    window.removeEventListener('keydown', this.onKeydown);
   },
 };
 </script>
+
+<style>
+body {
+  overflow: hidden;
+}
+
+.dot-navigation {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.dot-navigation ul {
+  list-style: none;
+  margin-right: 1.5 rem;
+  padding: 0;
+}
+
+.dot-navigation li {
+  width: 3rem;
+  height: 3rem;
+  background: #000;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.dot-navigation li.active {
+  background: rgb(81, 0, 255);
+}
+
+.full-screen-section {
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+}
+</style>

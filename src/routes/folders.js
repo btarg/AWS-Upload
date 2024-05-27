@@ -10,9 +10,13 @@ import cookieParser from 'cookie-parser';
 const router = express.Router();
 router.use(cookieParser(process.env.SESSION_SECRET));
 
-router.get('/all/:userId', checkAuthenticated, async (req, res) => {
-    const userId = req.params.userId;
-    const folders = await getAllFolders(userId);
+router.get('/all', checkAuthenticated, async (req, res) => {
+    let folders = null;
+    const dbUser = req.signedCookies.dbUser;
+    if (dbUser) {
+        const userId = dbUser.id;
+        folders = await getAllFolders(userId);
+    }
     res.json(folders);
 });
 

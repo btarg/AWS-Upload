@@ -61,7 +61,7 @@ export default {
   },
   props: {
     title: String,
-    price: String,
+    price: Number,
     monthly: Boolean,
     description: String,
     buttonText: String,
