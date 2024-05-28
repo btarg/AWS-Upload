@@ -1,6 +1,6 @@
 <template>
   <div class="file-element">
-    <a :href="`/download/${file.fileid}`">{{ file.filename }}</a>
+    <a :href="`/download/${file.id || file.fileid}`">{{ file.name || file.filename }}</a>
     <p>Size: {{ file.filesize }} bytes</p>
     <p>Uploaded at: {{ friendlyDate }}</p>
     <p>File type: {{ friendlyFileType }}</p>

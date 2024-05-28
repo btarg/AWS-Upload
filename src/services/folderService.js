@@ -16,6 +16,7 @@ export async function getSubFolders(folderId) {
   return rows;
 }
 
+
 export async function getOrCreateFolder(name, userId, parentFolderId = null) {
   // Try to get the folder from the database
   let { rows } = await pool.query('SELECT * FROM folders WHERE name = $1 AND userid = $2 AND parent_folder_id = $3', [name, userId, parentFolderId]);
@@ -28,6 +29,25 @@ export async function getOrCreateFolder(name, userId, parentFolderId = null) {
 
   // If the folder exists, return its ID
   return rows[0].id;
+}
+
+export async function getFolderWithSubfoldersAndFiles(folderId, userId) {
+    const query = `
+        WITH folder AS (
+            SELECT id::text, name, parent_folder_id::text, NULL AS userid, NULL AS folderid, NULL AS fileid, NULL AS filename, NULL AS filehash, NULL::bigint AS filesize, NULL::timestamp AS uploaddate, NULL::jsonb AS encryptiondata, NULL AS healthpoints, 'folder' as type FROM folders WHERE id = $1
+        ), subfolders AS (
+            SELECT id::text, name, parent_folder_id::text, NULL AS userid, NULL AS folderid, NULL AS fileid, NULL AS filename, NULL AS filehash, NULL::bigint AS filesize, NULL::timestamp AS uploaddate, NULL::jsonb AS encryptiondata, NULL AS healthpoints, 'subfolder' as type FROM folders WHERE parent_folder_id = $1
+        ), files AS (
+            SELECT fileid::text as id, filename AS name, folderid AS parent_folder_id, userid, folderid, fileid, filename, filehash, filesize, uploaddate, encryptiondata, healthpoints, 'file' as type FROM files WHERE folderid = $1 AND userid = $2
+        )
+        SELECT * FROM folder
+        UNION ALL
+        SELECT * FROM subfolders
+        UNION ALL
+        SELECT * FROM files;
+    `;
+    const { rows } = await pool.query(query, [folderId, userId]);
+    return rows;
 }
 export async function getFolderById(folderId) {
     const { rows } = await pool.query('SELECT * FROM folders WHERE id = $1', [folderId]);

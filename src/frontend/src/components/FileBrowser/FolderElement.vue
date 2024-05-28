@@ -27,4 +27,7 @@ export default {
   padding: 10px;
   margin-bottom: 10px;
 }
+.folder-element a {
+  cursor: pointer;
+}
 </style>

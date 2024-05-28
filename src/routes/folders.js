@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 dotenv.config();
 import { getParentFolderNames, getAllFilesInFolder, getParentFolder } from '../services/fileService.js';
-import { getAllFolders, getRootFolders, getSubFolders } from '../services/folderService.js';
+import { getAllFolders, getFolderById, getFolderWithSubfoldersAndFiles, getRootFolders, getSubFolders } from '../services/folderService.js';
 import { checkAuthenticated } from './auth.js';
 import cookieParser from 'cookie-parser';
 
@@ -28,18 +28,29 @@ router.get('/all', checkAuthenticated, (req, res) => {
     fetchData(req, res, getAllFolders);
 });
 
+router.get('/get/:folderId', checkAuthenticated, async (req, res) => {
+    const folderId = req.params.folderId;
+    const userId = getUserIdFromRequest(req);
+    let folder = null;
+    if (userId) {
+        folder = await getFolderWithSubfoldersAndFiles(folderId, userId);
+    }
+    
+    res.json(folder) || {};
+});
+
 router.get('/getFiles/:folderId', checkAuthenticated, async (req, res) => {
     const folderId = req.params.folderId;
     const userId = getUserIdFromRequest(req);
     const files = userId ? await getAllFilesInFolder(folderId, userId) : null;
-    res.json(files || {});
+    res.json(files) || {};
 });
 
 
 router.get('/getParent/:folderId', checkAuthenticated, async (req, res) => {
     const folderId = req.params.folderId;
-    const parent = getParentFolder(folderId);
-    res.json(parent || {});
+    const parent = await getParentFolder(folderId);
+    res.json(parent) || {};
 });
 
 router.get('/getParentFromFile/:fileId', checkAuthenticated, async (req, res) => {

@@ -29,7 +29,7 @@ export async function getParentFolderNames(fileId) {
 }
 
 export async function getParentFolder(folderId) {
-    const query = 'SELECT * FROM folders WHERE parent_folder_id = $1';
+    const query = 'SELECT parent_folder_id FROM folders WHERE id = $1';
     const { rows } = await pool.query(query, [folderId]);
     return rows[0];
 }
