@@ -18,7 +18,13 @@ export const createFileTable = async () => {
   `;
   await pool.query(query);
 };
-
+export const createFileIdIndex = async () => {
+  const query = `
+    CREATE INDEX IF NOT EXISTS index_fileid
+    ON files (fileId);
+  `;
+  await pool.query(query);
+};
 
 // Insert a new file record and return its ID
 export const insertFile = async (fileId, userId, filename, fileHash, fileSize, uploadDate, encryptionData, healthPoints, folderId) => {

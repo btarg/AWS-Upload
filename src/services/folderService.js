@@ -6,6 +6,11 @@ export async function getAllFolders(userId) {
   return rows;
 }
 
+export async function getRootFolders(userId) {
+  const { rows } = await pool.query('SELECT * FROM folders WHERE userid = $1 AND parent_folder_id IS NULL', [userId]);
+  return rows;
+}
+
 export async function getSubFolders(folderId) {
   const { rows } = await pool.query('SELECT * FROM folders WHERE parent_folder_id = $1', [folderId]);
   return rows;

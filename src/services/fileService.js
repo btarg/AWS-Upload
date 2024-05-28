@@ -28,9 +28,40 @@ export async function getParentFolderNames(fileId) {
     return rows[0]?.names || [];
 }
 
-export const getAllFilesInFolder = (folderId) => {
+export async function getParentFolder(folderId) {
+    const query = 'SELECT * FROM folders WHERE parent_folder_id = $1';
+    const { rows } = await pool.query(query, [folderId]);
+    return rows[0];
+}
+
+export const getAllUserFiles = (userId) => {
     return new Promise((resolve, reject) => {
-        pool.query('SELECT * FROM files WHERE folderId = $1', [folderId], (error, results) => {
+        pool.query('SELECT * FROM files WHERE userid = $1', [userId], (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results.rows);
+            }
+        });
+    });
+};
+
+
+export const getAllRootFiles = (userId) => {
+    return new Promise((resolve, reject) => {
+        pool.query('SELECT * FROM files WHERE userid = $1 AND folderid IS NULL', [userId], (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(results.rows);
+            }
+        });
+    });
+};
+
+export const getAllFilesInFolder = (folderId, userId) => {
+    return new Promise((resolve, reject) => {
+        pool.query('SELECT * FROM files WHERE folderId = $1 AND userid = $2', [folderId, userId], (error, results) => {
             if (error) {
                 reject(error);
             } else {
@@ -56,6 +87,20 @@ export const getFileByHash = (fileHash) => {
 export const getFileById = (fileId) => {
     return new Promise((resolve, reject) => {
         pool.query('SELECT * FROM files WHERE fileId = $1', [fileId], (error, results) => {
+            if (error) {
+                reject(error);
+            } else if (results.rows.length > 0) {
+                resolve(results.rows[0]);
+            } else {
+                resolve(null);
+            }
+        });
+    });
+};
+
+export const getUserFileById = (fileId, userId) => {
+    return new Promise((resolve, reject) => {
+        pool.query('SELECT * FROM files WHERE fileId = $1 AND userid = $2', [fileId, userId], (error, results) => {
             if (error) {
                 reject(error);
             } else if (results.rows.length > 0) {

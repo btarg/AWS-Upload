@@ -24,6 +24,14 @@ export const createUserTable = async () => {
     await pool.query(query);
 };
 
+export const createUserIdIndex = async () => {
+  const query = `
+    CREATE INDEX IF NOT EXISTS index_id
+    ON users (id);
+  `;
+  await pool.query(query);
+};
+
 export const upsertUser = async (id, data) => {
     const query = `
     INSERT INTO users (id, data)
