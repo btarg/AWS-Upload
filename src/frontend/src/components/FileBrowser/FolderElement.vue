@@ -1,12 +1,13 @@
 <template>
   <div class="folder-element">
     <a @click="titleClickFunction(folder.id)">{{ folder.name }}</a>
+    <!-- delete button -->
+    <button @click="deleteFolderAndContents(folder.id)">Delete</button>
     <p>(Folder)</p>
   </div>
 </template>
 
 <script>
-
 export default {
   props: {
     folder: {
@@ -18,6 +19,16 @@ export default {
       required: true
     }
   },
+  methods: {
+    async deleteFolderAndContents(folderId) {
+      const response = await fetch(`/api/delete/folder/${folderId}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        alert('Folder deleted');
+      }
+    }
+  }
 }
 </script>
 

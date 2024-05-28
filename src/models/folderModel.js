@@ -1,5 +1,8 @@
 import pool from '../config/database.js';
 import { v4 as uuidv4 } from 'uuid';
+import { deleteFile } from '../models/fileModel.js';
+import { getSubFolders } from '../services/folderService.js';
+import { getAllFilesInFolder } from '../services/fileService.js';
 
 export const createFolderTable = async () => {
     const query = `
@@ -45,7 +48,26 @@ export async function insertFolder(name, userId, parentFolderId = null) {
     }
 }
 
-// Delete a folder record
+export async function deleteFolderAndContents(folderId) {
+    const cteQuery = `
+        WITH RECURSIVE cte AS (
+            SELECT id FROM folders WHERE id = $1
+            UNION ALL
+            SELECT folders.id FROM folders JOIN cte ON folders.parent_folder_id = cte.id
+        )
+        SELECT id FROM cte
+    `;
+
+    const folderIds = await pool.query(cteQuery, [folderId]);
+    console.log(folderIds);
+
+    const deleteFilesQuery = `DELETE FROM files WHERE folderid = ANY($1::VARCHAR(255)[])`;
+    const deleteFoldersQuery = `DELETE FROM folders WHERE id = ANY($1::VARCHAR(255)[])`;
+
+    await pool.query(deleteFilesQuery, [folderIds.rows.map(row => row.id)]);
+    await pool.query(deleteFoldersQuery, [folderIds.rows.map(row => row.id)]);
+}
+
 export const deleteFolder = async (id) => {
     const query = 'DELETE FROM folders WHERE id = $1';
     await pool.query(query, [id]);

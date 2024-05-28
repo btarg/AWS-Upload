@@ -53,6 +53,7 @@ export async function getFolderById(folderId) {
     const { rows } = await pool.query('SELECT * FROM folders WHERE id = $1', [folderId]);
     return rows[0];
 }
+
 export async function getOrCreateFolders(folderString, userId) {
   const folderNames = folderString.split('/');
   let parentFolderId = null;

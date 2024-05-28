@@ -7,9 +7,24 @@ import express from 'express';
 const router = express.Router();
 import cookieParser from 'cookie-parser';
 import { b2Client } from '../config/backblaze.js';
+
+import { deleteFolderAndContents } from '../models/folderModel.js';
+
 router.use(cookieParser(process.env.SESSION_SECRET));
 
-router.delete('/:id', checkAuthenticated, async (req, res) => {
+router.delete('/folder/:id', checkAuthenticated, async (req, res) => {
+    const folderId = req.params.id;
+    try {
+        await deleteFolderAndContents(folderId);
+        return res.status(200).send('Deleted folder: ' + folderId);
+    } catch (error) {
+        console.error('Error deleting folder from database', error);
+        return res.status(500).json({  error: 'Error deleting folder from database' });
+    }
+    
+});
+
+router.delete('/file/:id', checkAuthenticated, async (req, res) => {
     const fileId = req.params.id;
 
     // Get the file record from the database
