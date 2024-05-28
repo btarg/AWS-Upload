@@ -1,6 +1,11 @@
 import { deleteFile } from '../models/fileModel.js';
 import { removeBytes } from '../models/userModel.js';
 
+import dotenv from 'dotenv';
+dotenv.config();
+import { b2Client, Bucket } from '../config/backblaze.js';
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+
 import events from 'events';
 import pool from '../config/database.js';
 
@@ -126,8 +131,19 @@ export const decreaseHealthPointsAndRemoveDecayedFiles = async () => {
     const { rows } = await pool.query(query);
     return rows;
 };
+
 export async function deleteFileById(fileId) {
     const file = await getFileById(fileId);
+    console.log("Attempting to delete: " + file);
+
+    // Delete the file from S3
+    const params = {
+        Bucket: Bucket,
+        Key: fileId
+    };
+    const command = new DeleteObjectCommand(params);
+    await b2Client.send(command);
+
     await removeBytes(file.userid, file.fileSize);
     const result = await deleteFile(fileId);
     return result;

@@ -43,7 +43,7 @@ export async function getS3URL(fileId, expiresInSeconds = 7200) {
         }
         return signedUrl;
     } catch (error) {
-        console.error(`Error generating signed URL for file ${file.id}:`, error);
+        console.error(`Error generating signed URL for file ${file.fileid}:`, error);
         throw error; // re-throw the error so it can be handled by the caller
     }
 }

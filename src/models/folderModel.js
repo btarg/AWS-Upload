@@ -1,8 +1,6 @@
 import pool from '../config/database.js';
 import { v4 as uuidv4 } from 'uuid';
-import { deleteFile } from '../models/fileModel.js';
-import { getSubFolders } from '../services/folderService.js';
-import { getAllFilesInFolder } from '../services/fileService.js';
+import { deleteFileById } from '../services/fileService.js';
 
 export const createFolderTable = async () => {
     const query = `
@@ -48,6 +46,7 @@ export async function insertFolder(name, userId, parentFolderId = null) {
     }
 }
 
+
 export async function deleteFolderAndContents(folderId) {
     const cteQuery = `
         WITH RECURSIVE cte AS (
@@ -59,12 +58,15 @@ export async function deleteFolderAndContents(folderId) {
     `;
 
     const folderIds = await pool.query(cteQuery, [folderId]);
-    console.log(folderIds);
 
-    const deleteFilesQuery = `DELETE FROM files WHERE folderid = ANY($1::VARCHAR(255)[])`;
+    const getFilesQuery = `SELECT fileid FROM files WHERE folderid = ANY($1::VARCHAR(255)[])`;
+    const files = await pool.query(getFilesQuery, [folderIds.rows.map(row => row.id)]);
+
+    for (let file of files.rows) {
+        await deleteFileById(file.fileid);
+    }
+
     const deleteFoldersQuery = `DELETE FROM folders WHERE id = ANY($1::VARCHAR(255)[])`;
-
-    await pool.query(deleteFilesQuery, [folderIds.rows.map(row => row.id)]);
     await pool.query(deleteFoldersQuery, [folderIds.rows.map(row => row.id)]);
 }
 

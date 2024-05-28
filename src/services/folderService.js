@@ -18,8 +18,11 @@ export async function getSubFolders(folderId) {
 
 
 export async function getOrCreateFolder(name, userId, parentFolderId = null) {
-  // Try to get the folder from the database
-  let { rows } = await pool.query('SELECT * FROM folders WHERE name = $1 AND userid = $2 AND parent_folder_id = $3', [name, userId, parentFolderId]);
+  // Modify the SQL query to handle null parent_folder_id
+  let { rows } = await pool.query(`
+    SELECT * FROM folders 
+    WHERE name = $1 AND userid = $2 AND (parent_folder_id = $3 OR (parent_folder_id IS NULL AND $3 IS NULL))
+  `, [name, userId, parentFolderId]);
 
   // If the folder doesn't exist, create it
   if (rows.length === 0) {
