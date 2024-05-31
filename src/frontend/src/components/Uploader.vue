@@ -12,6 +12,12 @@ import Dropzone from "dropzone";
 import "dropzone/dist/dropzone.css";
 
 export default {
+  props: {
+    onComplete: {
+      type: Function,
+      default: () => { },
+    },
+  },
   setup() {
     const uploading = ref(false);
     return {
@@ -80,6 +86,7 @@ export default {
         this.on("queuecomplete", () => {
           console.log('All files have been uploaded.');
           vm.uploading = false;
+          vm.onComplete(false);
         });
 
         this.on("error", (file, errorMessage) => {

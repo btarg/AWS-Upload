@@ -1,5 +1,5 @@
-// authStore.js
 import { defineStore } from 'pinia';
+import { getJSONPayloadFromCookie } from '../util';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
@@ -35,17 +35,18 @@ export const useAuthStore = defineStore('auth', {
         },
         updateDiscordUser() {
             return new Promise((resolve, reject) => {
-                const discordUserCookie = document.cookie.split('; ').find(row => row.startsWith('discordUser=j:'));
-                console.log('Stored discordUser:', discordUserCookie);
+            
+                const discordUserPayload = getJSONPayloadFromCookie("discordUser");
+                console.log('Stored discord user cookie:', discordUserPayload);
 
-                if (discordUserCookie) {
-                    this.discordUser = JSON.parse(decodeURIComponent(discordUserCookie.split('=')[1].substring(2)));
+                if (discordUserPayload) {
+                    this.discordUser = discordUserPayload;
                     if (this.discordUser.id) {
                         this.loggedIn = true;
                         resolve(this.discordUser);
                     } else {
-                        this.discordUser = null;
-                        reject(new Error("Invalid Discord User Cookie!"));
+                        reject(new Error("No user id found in cookie"));
+                        this.resetUser();
                     }
                 } else {
                     // Fetch the Discord user data
@@ -63,17 +64,18 @@ export const useAuthStore = defineStore('auth', {
                 }
             });
         },
+
         updateDBUser(override = false) {
-            console.log('Updating DB User');
+            console.log('Updating DB User: ' + override);
             return new Promise((resolve, reject) => {
                 this.loggedIn = false;
-
+                
                 // Check if the user's authentication status is already stored in the cookies
-                const userCookie = document.cookie.split('; ').find(row => row.startsWith('dbUser=j:'));
-                console.log('Stored user:', userCookie);
+                const userPayload = getJSONPayloadFromCookie("dbUser");
+                console.log('Stored DB user cookie:', userPayload);
 
-                if (userCookie && !override) {
-                    this.user = JSON.parse(decodeURIComponent(userCookie.split('=')[1].substring(2)));
+                if (userPayload && !override) {
+                    this.user = userPayload;
                     if (this.user.id) {
                         this.loggedIn = true;
                         resolve(this.user);
@@ -125,13 +127,13 @@ export const useAuthStore = defineStore('auth', {
 
         resetUser() {
             this.loggedIn = false;
-            this.dbUser = null;
+            this.user = null;
             this.discordUser = null;
             document.cookie = "dbUser=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             document.cookie = "discordUser=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            
+
         }
     },
 });

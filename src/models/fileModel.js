@@ -9,7 +9,7 @@ export const createFileTable = async () => {
       filename VARCHAR(255) NOT NULL,
       fileHash VARCHAR(255) NOT NULL,
       fileSize BIGINT NOT NULL,
-      uploadDate TIMESTAMP NOT NULL,
+      uploadDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       encryptionData JSONB NOT NULL,
       healthPoints VARCHAR(255) NOT NULL,
       folderId VARCHAR(255),

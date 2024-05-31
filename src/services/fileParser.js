@@ -6,7 +6,7 @@ import { Transform } from 'stream';
 import { emitFileUploaded } from '../services/fileService.js';
 import { addBytes } from '../models/userModel.js';
 import { insertFile } from '../models/fileModel.js';
-import { generateId } from '../routes/linkgenerator.js';
+import { generateId } from '../utils/linkgenerator.js';
 import { getFullHostname } from '../utils/urls.js';
 
 import { getOrCreateFolders } from '../services/folderService.js';
