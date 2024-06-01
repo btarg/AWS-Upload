@@ -7,7 +7,7 @@ export default {
     extend: {
       colors: {
         'light': {
-          'background': '#f6f2ff', // light gray for background
+          'background': '#e2e8f4', // light gray for background
           'backgroundSecondary': 'rgba(105, 90, 205, 0.25)',
           'primary': '#1f2937', // dark gray for primary text
           'secondary': '#4F46E5', // indigo for secondary text
