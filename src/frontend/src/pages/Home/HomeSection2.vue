@@ -20,9 +20,9 @@
 </template>
 
 <script>
-import InfoBox from '../components/InfoBox.vue';
-import InfoBoxWithButton from '../components/InfoBoxWithButton.vue';
-import IconButton from '../components/Buttons/IconButton.vue';
+import InfoBox from '../../components/InfoBox.vue';
+import InfoBoxWithButton from '../../components/InfoBoxWithButton.vue';
+import IconButton from '../../components/Buttons/IconButton.vue';
 
 
 export default {

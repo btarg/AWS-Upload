@@ -28,14 +28,14 @@
 
 
 <script>
-import HeaderBar from '../components/HeaderBar.vue';
-import AnnouncementBanner from '../components/AnnouncementBanner.vue';
-import LoginButton from '../components/Buttons/LoginButton.vue';
-import FooterBar from '../components/FooterBar.vue';
+import HeaderBar from '../../components/HeaderBar.vue';
+import AnnouncementBanner from '../../components/AnnouncementBanner.vue';
+import LoginButton from '../../components/Buttons/LoginButton.vue';
+import FooterBar from '../../components/FooterBar.vue';
 import HomeSection1 from './HomeSection1.vue';
 import HomeSection2 from './HomeSection2.vue';
 
-import InfoBoxWithButton from '../components/InfoBoxWithButton.vue';
+import InfoBoxWithButton from '../../components/InfoBoxWithButton.vue';
 
 export default {
   components: {

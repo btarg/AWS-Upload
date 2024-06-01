@@ -21,7 +21,7 @@ const uploadLimiter = async (req, res, next) => {
         }
         const planName = currentUser.data.subscriptionPlan;
         console.log(`User id ${userId} has a subscription plan of ${planName}`)
-        const subscriptionPlan = getSubscriptionPlan(planName);
+        const subscriptionPlan = await getSubscriptionPlan(planName);
         const maxHourlyUploads = subscriptionPlan.maxHourlyUploads || 5;
         console.log(`User id ${userId} has a max hourly upload limit of ${maxHourlyUploads}`);
         rateLimit({

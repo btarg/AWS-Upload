@@ -35,19 +35,18 @@ import { getFullHostname } from './utils/urls.js';
 
     // API endpoints
     app.use('/api/auth', authRoutes);
+    app.use('/api/discord', discordRoutes);
     app.use('/api/putfile', uploadRoutes);
+    app.use('/api/download', downloadRoutes);
     app.use('/api/delete', deleteRoutes);
     app.use('/api/list', listRoutes);
     app.use('/api/files', fileRoutes);
     app.use('/api/folders', folderRoutes);
-    app.use('/api/discord', discordRoutes);
     app.use('/api/config', configRoutes);
     app.get('/api/banner', (req, res) => {
         res.sendFile(join(__dirname, 'banner.txt'));
     });
-
-    // User facing
-    app.use('/download', downloadRoutes);
+    
 
     app.use(express.static(join(__dirname, 'frontend', 'dist')));
     app.get('*', (req, res) => {

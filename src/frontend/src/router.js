@@ -3,6 +3,7 @@ import Home from './pages/Home/HomePage.vue';
 import UploadPage from './pages/UploadPage.vue';
 import NotFound from './pages/NotFound.vue';
 import PricingPage from './pages/PricingPage.vue';
+import DownloadPage from './pages/DownloadPage.vue';
 
 const routes = [
     { path: '/', component: Home },
@@ -11,6 +12,7 @@ const routes = [
         name: 'upload',
         component: UploadPage
     },
+    { path: '/download/:fileId?', component: DownloadPage },
     { path: '/pricing', component: PricingPage },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound },
 ];

@@ -62,7 +62,7 @@ export async function upsertDefaultUserData(discordId) {
         bytesUsed: 0,
         bytesAllowed: bytesAllowed,
         credits: 0,
-        subscriptionPlan: "Normal"
+        subscriptionPlan: "NORMAL"
     }
     return await upsertUserData(uuid, dataToInsert);
 }
