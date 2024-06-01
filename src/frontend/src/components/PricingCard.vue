@@ -51,7 +51,7 @@
 
 <script>
 import { formatMoney } from '../util.js';
-import IconButton from './IconButton.vue';
+import IconButton from './Buttons/IconButton.vue';
 import prettyBytes from 'pretty-bytes';
 import { getMappedFeatures, getDescription } from '../../../config/subscriptions.js';
 

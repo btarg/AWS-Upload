@@ -43,6 +43,9 @@ export const getMappedFeatures = (features) => {
 export const getDescription = (plan) => {
     return planDescriptions[plan];
 }
+export const getSubscriptionPlan = (planName) => {
+    return subscriptionPlans[planName];
+}
 
 export const subscriptionPlans = {
     // The title and key need to be the same for other functions to read them properly
@@ -55,7 +58,7 @@ export const subscriptionPlans = {
     },
     PLUS: {
         title: "PLUS",
-        price: 4.99,
+        price: 3.99,
         maxHourlyUploads: maxHourlyUploads.PLUS,
         totalUploadCap: totalUploadCaps.PLUS,
         features: [

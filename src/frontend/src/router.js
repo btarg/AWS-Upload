@@ -1,14 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Home from './pages/Home.vue';
+import Home from './pages/Home/HomePage.vue';
 import UploadPage from './pages/UploadPage.vue';
 import NotFound from './pages/NotFound.vue';
 import PricingPage from './pages/PricingPage.vue';
-import FolderViewPage from './pages/FolderViewPage.vue';
 
 const routes = [
     { path: '/', component: Home },
-    { path: '/upload', component: UploadPage },
-    { path: '/folders', component: FolderViewPage },
+    {
+        path: '/upload/:folderId?',
+        name: 'upload',
+        component: UploadPage
+    },
     { path: '/pricing', component: PricingPage },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound },
 ];

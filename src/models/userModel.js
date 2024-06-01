@@ -10,7 +10,7 @@ const userDataSchema = Joi.object({
     bytesUsed: Joi.number().integer().required(),
     bytesAllowed: Joi.number().integer().required(),
     credits: Joi.number().integer().required(),
-    subscriptionPlan: subscriptionSchema.required()
+    subscriptionPlan: Joi.string().required()
 });
 
 // Create the users table if it doesn't exist
@@ -56,14 +56,13 @@ export async function upsertDefaultUserData(discordId) {
     // create new uuid
     const uuid = uuidv4();
     const bytesAllowed = await getBytesAllowed();
-    console.log(JSON.stringify(subscriptionPlans.NORMAL));
     
     const dataToInsert = {
         discordId: discordId,
         bytesUsed: 0,
         bytesAllowed: bytesAllowed,
         credits: 0,
-        subscriptionPlan: subscriptionPlans.NORMAL
+        subscriptionPlan: "Normal"
     }
     return await upsertUserData(uuid, dataToInsert);
 }

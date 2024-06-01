@@ -1,9 +1,9 @@
 <template>
   <div class="folder-element">
     <a @click="titleClickFunction(folder.id)">{{ folder.name }}</a>
+    <p>(Folder)</p>
     <!-- delete button -->
     <button @click="deleteFolderAndContents(folder.id)">Delete</button>
-    <p>(Folder)</p>
   </div>
 </template>
 

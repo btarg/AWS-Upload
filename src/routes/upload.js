@@ -10,6 +10,7 @@ import { checkAuthenticated, fetchUserData } from '../routes/auth.js';
 import cookieParser from 'cookie-parser';
 import { getFileByHash, emitFileUploaded } from '../services/fileService.js';
 import { getFullHostname } from '../utils/urls.js';
+import { getSubscriptionPlan } from '../config/subscriptions.js';
 
 const uploadLimiter = async (req, res, next) => {
     try {
@@ -18,8 +19,10 @@ const uploadLimiter = async (req, res, next) => {
         if (!userId) {
             return res.status(404).json({ error: "User not found" });
         }
-        console.log(`User id ${userId} has a subscription plan of ${currentUser.data.subscriptionPlan.title}`)
-        const maxHourlyUploads = currentUser.data.subscriptionPlan.maxHourlyUploads || 5;
+        const planName = currentUser.data.subscriptionPlan;
+        console.log(`User id ${userId} has a subscription plan of ${planName}`)
+        const subscriptionPlan = getSubscriptionPlan(planName);
+        const maxHourlyUploads = subscriptionPlan.maxHourlyUploads || 5;
         console.log(`User id ${userId} has a max hourly upload limit of ${maxHourlyUploads}`);
         rateLimit({
             windowMs: 60 * 60 * 1000, // 1 hour

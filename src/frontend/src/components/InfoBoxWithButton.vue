@@ -10,7 +10,7 @@
 
 <script>
 import InfoBox from './InfoBox.vue';
-import IconButton from './IconButton.vue';
+import IconButton from './Buttons/IconButton.vue';
 
 export default {
     components: {

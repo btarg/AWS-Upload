@@ -3,9 +3,11 @@
     <HeaderBar></HeaderBar>
     <main class="text-center py-4">
       <h1 class="text-5xl font-bold mb-4">Start free, <span class="payg-title">pay as you go</span></h1>
-      <p class="text-lg text-gray-400 mb-12">Flexible storage with pricing that suits you, cheaper than <b>Dropbox</b>
-        and
-        <b>OneDrive.</b>
+      <p class="text-lg text-gray-400">Flexible storage with pricing that suits you,
+        cheaper than Dropbox and OneDrive.
+      </p>
+      <p class="text-lg text-gray-400 mb-12">
+        Click "Start free" to top up your account with credits. Upgrade anytime to unlock more features.
       </p>
       <div class="flex justify-center space-x-6">
         <PricingCard v-for="(plan, key, index) in subscriptionPlans" :key="key"

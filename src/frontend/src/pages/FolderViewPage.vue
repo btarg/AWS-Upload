@@ -27,21 +27,28 @@ export default {
     },
     methods: {
         async setCurrentFolderAndUpdate(id) {
-            this.$router.push({ query: { folder: id } });
+            this.$router.push({ name: 'upload', params: { folderId: id } });
         },
         async updateFolderView(fid) {
-
             if (!fid) {
                 // we are in the root folder
-                const responseFolders = await fetch('/api/folders/root');
-                const dataFolders = await responseFolders.json();
+                if (this.cache.root) {
+                    this.subfolders = this.cache.root.folders;
+                    this.files = this.cache.root.files;
+                    this.currentFolderData = null;
+                } else {
+                    const responseFolders = await fetch('/api/folders/root');
+                    const dataFolders = await responseFolders.json();
 
-                const responseFiles = await fetch('/api/files/root');
-                const dataFiles = await responseFiles.json();
+                    const responseFiles = await fetch('/api/files/root');
+                    const dataFiles = await responseFiles.json();
 
-                this.subfolders = dataFolders;
-                this.files = dataFiles;
-                this.currentFolderData = null;
+                    this.subfolders = dataFolders;
+                    this.files = dataFiles;
+                    this.currentFolderData = null;
+
+                    this.cache.root = { folders: this.subfolders, files: this.files };
+                }
             } else {
                 // we are in a subfolder
                 if (this.cache[fid]) {
@@ -63,18 +70,12 @@ export default {
             }
         },
         async goUpOneFolder() {
-            if (this.currentFolderData.id) {
-                const response = await fetch(`/api/folders/getParent/${this.currentFolderData.id}`);
-                const data = await response.json();
-                this.setCurrentFolderAndUpdate(data.parent_folder_id);
-            } else {
-                console.log("We should never not have an id unless we are root!");
-            }
+            this.setCurrentFolderAndUpdate(this.currentFolderData.parent_folder_id);
         },
     },
 
     watch: {
-        '$route.query.folder': {
+        '$route.params.folderId': {
             immediate: true,
             handler(newVal) {
                 this.updateFolderView(newVal);
@@ -84,8 +85,7 @@ export default {
 
     async created() {
         try {
-            this.updateFolderView(this.$route.query.folder);
-
+            this.updateFolderView(this.$route.params.folderId);
         } catch (error) {
             console.error(error);
         }
