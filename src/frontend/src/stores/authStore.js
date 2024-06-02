@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { getJSONPayloadFromCookie } from '../util';
+import { getJSONPayloadFromCookie } from '../js/util.js';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({

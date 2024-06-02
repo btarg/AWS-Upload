@@ -4,7 +4,7 @@ export default class AEAD {
     static IV_LENGTH_IN_BYTES = 16;
     static TAG_LENGTH_IN_BYTES = 16;
 
-    static ALGORITH = 'AES-GCM';
+    static ALGORITHM = 'AES-GCM';
     
     static secretKey;
     static tagLengthInBytes;
@@ -14,32 +14,43 @@ export default class AEAD {
         this.tagLengthInBytes = tagLengthInBytes;
     }
 
-    static async getCryptoKeyFromRawKey(rawKey) {
+    async getCryptoKeyFromRawKey(rawKey) {
+        let encoder = new TextEncoder();
+        let encodedKey = encoder.encode(rawKey);
         return crypto.subtle.importKey(
             'raw',
-            rawKey,
-            { name: this.ALGORITHM, },
+            encodedKey,
+            { name: AEAD.ALGORITHM, },
             true,
             ['encrypt', 'decrypt'],
         );
     }
-    static async encrypt(iv, data) {
-        return await crypto.subtle.encrypt({
-            name: ALGORITHM,
-            iv,
-            tagLength: this.tagLengthInBytes * 8,
-            secretKey: this.secretKey,
-            data,
-        });
+
+    async encrypt(iv, data) {
+        let encoder = new TextEncoder();
+        let encodedIV = encoder.encode(iv);
+        const key = await this.getCryptoKeyFromRawKey(this.secretKey);
+        return await crypto.subtle.encrypt(
+            {
+                name: AEAD.ALGORITHM,
+                iv: encodedIV,
+                tagLength: this.tagLengthInBytes * 8,
+            },
+            key,
+            data
+        );
     }
 
-    static async decrypt(iv, data) {
-        return await crypto.subtle.decrypt({
-            name: ALGORITHM,
-            iv,
-            tagLength: this.tagLengthInBytes * 8,
-            secretKey: this.secretKey,
-            data,
-        });
+    async decrypt(iv, data) {
+        const key = await this.getCryptoKeyFromRawKey(this.secretKey);
+        return await crypto.subtle.decrypt(
+            {
+                name: AEAD.ALGORITHM,
+                iv: iv,
+                tagLength: this.tagLengthInBytes * 8,
+            },
+            key,
+            data
+        );
     }
 }
