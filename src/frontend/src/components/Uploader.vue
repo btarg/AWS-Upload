@@ -10,6 +10,7 @@
 import { ref } from 'vue';
 import Dropzone from "dropzone";
 import "dropzone/dist/dropzone.css";
+import { encryptAndAssignHash } from '../js/encryption.js';
 
 export default {
   props: {
@@ -44,34 +45,25 @@ export default {
       headers: {},
       autoProcessQueue: false,
       init: function () {
-        this.on("addedfile", (file) => {
-          // Calculate the file hash
-          const reader = new FileReader();
-          reader.onload = async (event) => {
-            const arrayBuffer = event.target.result;
-            const hashBuffer = await window.crypto.subtle.digest(
-              "SHA-1",
-              arrayBuffer
-            );
-            const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
-            const fileHash = hashArray
-              .map((b) => b.toString(16).padStart(2, "0"))
-              .join(""); // convert bytes to hex string
-            console.log(`Hash of file ${file.name}: ${fileHash}`);
-            file.fileHash = fileHash;
-            if (!isNaN(file.size)) {
-              file.fileSize = file.size;
-            } else {
-              console.error(`Invalid file size for file ${file.name}`);
-            }
-          };
-          reader.readAsArrayBuffer(file);
+        this.on("addedfile", async (file) => {
+          try {
+            // Calculate the file hash and encrypt
+            file = await encryptAndAssignHash(file);
+            console.log("File is encrypted, iv is " + file.iv);
+          } catch (error) {
+            console.error('Error reading file:', error);
+          }
         });
         this.on("sending", (file, xhr, formData) => {
           vm.uploading = true;
-          xhr.setRequestHeader("folder", vm.folder)
+          console.log("sending file with size " + file.fileSize);
+          xhr.setRequestHeader("folder", vm.folder);
           xhr.setRequestHeader("filehash", file.fileHash);
           xhr.setRequestHeader("filesize", file.fileSize);
+          xhr.setRequestHeader("encrypted", file.encrypted);
+          if (file.encrypted) {
+            xhr.setRequestHeader("iv", file.iv);
+          }
         });
         this.on("success", (file, response) => {
           if (!response.error) {
