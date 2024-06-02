@@ -1,15 +1,13 @@
 <template>
-  <div id="dropzone" class="dropzone"></div>
-  <!-- upload button -->
-  <button @click="dropzone.processQueue()" :disabled="uploading">Upload</button>
-  <!-- text box for folder structure e.g. coolfiles/coolerfiles/ -->
-  <input type="text" v-model="folder" placeholder="Folder structure" />
+  <div>
+    <input type="file" @change="onFileChange" multiple />
+    <button @click="uploadFiles" :disabled="uploading">Upload</button>
+    <input type="text" v-model="folder" placeholder="Folder structure" />
+  </div>
 </template>
 
 <script>
 import { ref } from 'vue';
-import Dropzone from "dropzone";
-import "dropzone/dist/dropzone.css";
 import { encryptAndAssignHash } from '../js/encryption.js';
 
 export default {
@@ -27,70 +25,43 @@ export default {
   },
   data() {
     return {
-      dropzone: null,
-      maxFileSize: null,
+      files: [],
       folder: '',
     };
   },
-  async mounted() {
-    const vm = this;
-    const response = await fetch('/api/config');
-    const config = await response.json();
-    this.maxFileSize = config.maxFileSize / (1024 * 1024); // Convert to MB
-
-    this.dropzone = new Dropzone("#dropzone", {
-      url: "/api/putfile",
-      maxFilesize: process.env.MB_MAX / (1024 * 1024), // in MB
-      maxFiles: 5, // Limit the number of files that can be dropped at once
-      headers: {},
-      autoProcessQueue: false,
-      init: function () {
-        this.on("addedfile", async (file) => {
-          try {
-            // Calculate the file hash and encrypt
-            file = await encryptAndAssignHash(file);
-            console.log("File is encrypted, iv is " + file.iv);
-          } catch (error) {
-            console.error('Error reading file:', error);
+  methods: {
+    onFileChange(e) {
+      this.files = [...this.files, ...Array.from(e.target.files)];
+    },
+    async uploadFiles() {
+      this.uploading = true;
+      try {
+        for (let file of this.files) {
+          const encryptedFile = await encryptAndAssignHash(file);
+          const formData = new FormData();
+          formData.append('file', encryptedFile, file.name);
+          const response = await fetch('/api/putfile', {
+            method: 'POST',
+            headers: {
+              'folder': this.folder,
+              'filehash': encryptedFile.fileHash,
+              'filesize': encryptedFile.fileSize,
+              'encrypted': encryptedFile.encrypted,
+              ...(encryptedFile.encrypted ? { 'iv': encryptedFile.iv } : {}),
+            },
+            body: formData,
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-        });
-        this.on("sending", (file, xhr, formData) => {
-          vm.uploading = true;
-          console.log("sending file with size " + file.fileSize);
-          xhr.setRequestHeader("folder", vm.folder);
-          xhr.setRequestHeader("filehash", file.fileHash);
-          xhr.setRequestHeader("filesize", file.fileSize);
-          xhr.setRequestHeader("encrypted", file.encrypted);
-          if (file.encrypted) {
-            xhr.setRequestHeader("iv", file.iv);
-          }
-        });
-        this.on("success", (file, response) => {
-          if (!response.error) {
-            const downloadLink = response.downloadLink;
-            console.log(`${file.name} uploaded successfully. Download: ${downloadLink}`);
-          } else {
-            // alert the error
-            console.log(response.error.message);
-          }
-          vm.uploading = false;
-        });
-        this.on("queuecomplete", () => {
-          console.log('All files have been uploaded.');
-          vm.uploading = false;
-          vm.onComplete(false);
-        });
-
-        this.on("error", (file, errorMessage) => {
-          console.log(`Error uploading file ${file.name}: ${JSON.stringify(errorMessage)}`);
-        });
-      },
-    });
-  },
-  beforeDestroy() {
-    if (this.dropzone) {
-      this.dropzone.destroy();
-    }
+        }
+        this.onComplete(false);
+      } catch (error) {
+        console.error('Error uploading files:', error);
+      } finally {
+        this.uploading = false;
+      }
+    },
   },
 };
 </script>
