@@ -23,6 +23,13 @@ export const parseAndUpload = async (req) => {
         const fileHash = req.headers['filehash'];
         const fileSize = Number(req.headers['filesize']);
 
+        let isEncrypted = false;
+        let fileIV = null;
+        if (req.headers['encrypted']) {
+            isEncrypted = true;
+            fileIV = req.headers['iv'];
+        }
+
         const dbUser = req.signedCookies.dbUser;
         const userId = dbUser.id;
 
@@ -99,7 +106,7 @@ export const parseAndUpload = async (req) => {
                         // add bytes to user
                         addBytes(userId, fileSize);
 
-                        const encryptionData = { encrypted: false, iv: null };
+                        const encryptionData = { encrypted: isEncrypted, iv: fileIV };
                         const healthPoints = 72;
 
                         insertFile(fileId, userId, originalFilename, fileHash, fileSize, new Date(), encryptionData, healthPoints, folderId)
