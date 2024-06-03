@@ -38,7 +38,7 @@ export default {
     this.maxFileSize = config.maxFileSize / (1024 * 1024); // Convert to MB
 
     this.dropzone = new Dropzone("#dropzone", {
-      url: "/api/putfile",
+      url: "/api/upload",
       maxFilesize: process.env.MB_MAX / (1024 * 1024), // in MB
       maxFiles: 5, // Limit the number of files that can be dropped at once
       headers: {},

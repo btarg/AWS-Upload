@@ -1,17 +1,17 @@
 <template>
   <button v-if="!authStore.loggedIn" @click="authStore.logIn()">Login</button>
   <button v-else @click="authStore.logOut()">Logout</button>
-
+<!-- 
   <label v-if="authStore.loggedIn" class="text-white">{{
     authStore.discordUser ? authStore.discordUser.username : ""
-    }}</label>
+    }}</label> -->
 
-  <Uploader v-if="authStore.loggedIn" :on-complete="updateUserData" />
+  <!-- <Uploader v-if="authStore.loggedIn" :on-complete="updateUserData" />
   <label v-if="authStore.loggedIn">
     Used:
     {{ bytesUsed }} /
     {{ bytesAllowed }}
-  </label>
+  </label> -->
   <FolderViewPage v-if="authStore.loggedIn" />
 
 </template>

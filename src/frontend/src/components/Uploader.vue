@@ -40,7 +40,7 @@ export default {
           const encryptedFile = await encryptAndAssignHash(file);
           const formData = new FormData();
           formData.append('file', encryptedFile, file.name);
-          const response = await fetch('/api/putfile', {
+          const response = await fetch('/api/upload', {
             method: 'POST',
             headers: {
               'folder': this.folder,

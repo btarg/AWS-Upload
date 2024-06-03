@@ -16,28 +16,29 @@ export function encryptAndAssignHash(file) {
                     .map((b) => b.toString(16).padStart(2, "0"))
                     .join(""); // convert bytes to hex string
 
-
-
                 // then encrypt the file, using the array buffer
                 const iv = crypto.getRandomValues(new Uint8Array(AEAD.IV_LENGTH_IN_BYTES));
                 const aead = await AEAD.create("my-secret-key");
 
                 let encrypted = await aead.encrypt(iv, arrayBuffer);
-                let encryptedFileObject = new Blob([encrypted], { type: file.type });
+                
+                const fileTypeResponse = await fetch(`/api/download/getType/${file.name}`);
+                const fileType = await fileTypeResponse.json();
+                let encryptedFile = new Blob([encrypted], { type: fileType.mime });
 
                 // apply the calculated hash as well as the size to the file object
                 console.log(`Hash of file ${file.name}: ${fileHash}`);
-                encryptedFileObject.fileHash = fileHash;
+                encryptedFile.filehash = fileHash;
                 if (!isNaN(file.size)) {
-                    encryptedFileObject.fileSize = file.size;
+                    encryptedFile.filesize = file.size;
                 } else {
                     console.error(`Invalid file size for file ${file.name}`);
+                    encryptedFile.filesize = 0;
                 }
-                // add the iv back to the object so we can retrieve it later
-                encryptedFileObject.iv = iv;
-
-                console.log("Encrypted file: " + encryptedFileObject);
-                resolve(encryptedFileObject);
+                encryptedFile.filename = file.name;
+                encryptedFile.filetype = fileType;
+                encryptedFile.iv = iv;
+                resolve(encryptedFile);
             } catch (error) {
                 console.error(error);
             }

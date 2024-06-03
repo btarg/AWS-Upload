@@ -4,7 +4,7 @@ This service acts as a simplified pay-as-you-go alternative to Google Drive / On
 
 ## Tech Stack
 
-- **Frontend**: The frontend is built with Vue.js and Vite. We use Pinia for state management and Tailwind CSS for styling. DropZone.js is used for file uploading.
+- **Frontend**: The frontend is built with Vue.js and Vite. We use Pinia for state management and Tailwind CSS for styling.
 
 - **Backend**: The backend is built with Express.js.
 

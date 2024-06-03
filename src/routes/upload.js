@@ -30,7 +30,7 @@ const uploadLimiter = async (req, res, next) => {
             message: "Too many upload attempts from this IP, please try again after 15 minutes."
         })(req, res, next);
     } catch (error) {
-        console.error(error.message);
+        console.error("Upload error: " + error.message);
         return res.status(500).send(req.body);
     }
 };
@@ -73,17 +73,9 @@ router.post('/', checkAuthenticated, uploadLimiter, async (req, res) => {
                     return res.status(403).send("User has exceeded their storage limit");
                 }
 
-                try {
-                    const data = await parseAndUpload(req);
-                    // pass the data directly on success. the json should include downloadLink
-                    return res.status(200).json(data);
-                } catch (error) {
-                    console.log(error);
-                    return res.status(error.statusCode || 500).json({
-                        message: "An error occurred.",
-                        error
-                    });
-                }
+                const data = await parseAndUpload(req);
+                // pass the data directly on success. the json should include downloadLink
+                return res.status(200).json(data);
 
             }
 

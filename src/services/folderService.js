@@ -58,6 +58,10 @@ export async function getFolderById(folderId) {
 }
 
 export async function getOrCreateFolders(folderString, userId) {
+  if (!folderString) {
+    return null;
+  }
+
   const folderNames = folderString.split('/');
   let parentFolderId = null;
 

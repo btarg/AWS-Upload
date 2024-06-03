@@ -36,7 +36,7 @@ import { getFullHostname } from './utils/urls.js';
     // API endpoints
     app.use('/api/auth', authRoutes);
     app.use('/api/discord', discordRoutes);
-    app.use('/api/putfile', uploadRoutes);
+    app.use('/api/upload', uploadRoutes);
     app.use('/api/download', downloadRoutes);
     app.use('/api/delete', deleteRoutes);
     app.use('/api/list', listRoutes);

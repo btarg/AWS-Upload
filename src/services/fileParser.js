@@ -20,6 +20,8 @@ export const parseAndUpload = async (req) => {
             allowEmptyFiles: false,
             hashAlgorithm: 'sha1'
         }
+
+        const fileName = req.headers['filename'] || "New File";
         const fileHash = req.headers['filehash'];
         const fileSize = Number(req.headers['filesize']);
 
@@ -49,10 +51,6 @@ export const parseAndUpload = async (req) => {
             folderId = null;
         }
 
-
-        // this will be set later
-        let originalFilename;
-
         // method accepts the request and a callback.
         form.parse(req, (err, fields, files) => {
             if (err) {
@@ -60,7 +58,7 @@ export const parseAndUpload = async (req) => {
                 reject({ error: err.message, statusCode: 500 });
                 return;
             }
-
+        
         })
         form.on('error', error => {
             console.log("Rejected with error: " + error.message);
@@ -69,8 +67,6 @@ export const parseAndUpload = async (req) => {
         })
 
         form.on('fileBegin', (formName, file) => {
-            originalFilename = file.originalFilename;
-
             file.open = async function () {
                 this._writeStream = new Transform({
                     transform(chunk, encoding, callback) {
@@ -93,7 +89,7 @@ export const parseAndUpload = async (req) => {
                         Bucket: Bucket,
                         Key: fileId,
                         Body: this._writeStream,
-                        ContentDisposition: `inline; filename="${originalFilename}"`
+                        ContentDisposition: `inline; filename="${fileName}"`
                     },
                     tags: [], // optional tags
                     queueSize: 4, // optional concurrency configuration
@@ -109,14 +105,14 @@ export const parseAndUpload = async (req) => {
                         const encryptionData = { encrypted: isEncrypted, iv: fileIV };
                         const healthPoints = 72;
 
-                        insertFile(fileId, userId, originalFilename, fileHash, fileSize, new Date(), encryptionData, healthPoints, folderId)
+                        insertFile(fileId, userId, fileName, fileHash, fileSize, new Date(), encryptionData, healthPoints, folderId)
                             .then(() => {
                                 const downloadLink = `${hostname}/download/${fileId}`;
 
-                                emitFileUploaded(dbUser, file.originalFilename, fileSize, encryptionData, downloadLink);
-                                console.log(`Finished uploading to AWS: ${file.originalFilename}, user ${userId}`);
+                                emitFileUploaded(dbUser, fileName, fileSize, encryptionData, downloadLink);
+                                console.log(`Finished uploading to S3: ${fileName}, user ${userId}`);
 
-                                resolve({ downloadLink: downloadLink });
+                                resolve({ id: fileId, downloadLink: downloadLink });
                             })
                             .catch(error => {
                                 console.error('Error inserting file:', error);
