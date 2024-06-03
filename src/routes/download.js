@@ -5,7 +5,6 @@ dotenv.config();
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import rateLimit from "express-rate-limit";
-import { getFriendlyFileType } from '../utils/fileutil.js';
 import { b2Client, Bucket } from '../config/backblaze.js';
 
 const urlCache = new Map();
@@ -43,20 +42,6 @@ export async function getS3URL(fileId, expiresInSeconds = 7200) {
         throw error; // re-throw the error so it can be handled by the caller
     }
 }
-
-router.get('/getType/:filename', limiter, async (req, res) => {
-    try {
-        const filename = req.params.filename;
-        const fileType = await getFriendlyFileType(filename);
-        res.status(200).json(fileType);
-    } catch (error) {
-        console.error('Error getting file type', error);
-        if (!res.headersSent) {
-            return res.status(500).send('Error getting file type');
-        }
-    }
-});
-
 router.get('/getURL/:id', limiter, async (req, res) => {
     try {
         const fileId = req.params.id;

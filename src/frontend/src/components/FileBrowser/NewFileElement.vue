@@ -1,9 +1,9 @@
 <template>
   <progress v-if="shouldUpload && progress > 0" :value="progress" max="100"></progress>
-  <div v-else class="flex justify-between items-center bg-gray-800 p-4 rounded-lg w-full">
+  <div v-else class="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-lg w-full">
     <div class="flex items-center space-x-4">
       <input class="form-checkbox h-5 w-5 text-purple-500" type="checkbox">
-      <img alt="Icon representing a PDF file" class="w-10 h-10" height="40" width="40">
+      <span :class="`text-xl fiv-viv fiv-icon-${currentFileType.extension}`"></span>
       <a :href="`/download/${currentFile.fileid}`" class="text-white">{{ currentFile.filename }}</a>
     </div>
     <div class="flex items-center space-x-4 ml-auto mr-4">
@@ -21,6 +21,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { encryptAndAssignHash } from '../../js/encryption.js';
+import { getFileType } from '../../js/util.js';
 import prettyBytes from 'pretty-bytes';
 
 export default {
@@ -55,10 +56,13 @@ export default {
   setup(props, { emit }) {
     const progress = ref(0);
     const currentFile = ref(props.file);
+    const currentFileType = ref(null);
 
     onMounted(async () => {
       try {
         if (!props.shouldUpload) {
+          console.log("Getting filetype for " + currentFile.value.filename);
+          currentFileType.value = await getFileType(currentFile.value.filename);
           return;
         }
 
@@ -67,7 +71,6 @@ export default {
         }
         // TODO: add proper progress tracking
         progress.value = 50;
-
         const uploadedFileBlob = await encryptAndAssignHash(currentFile.value.rawFile);
         const formData = new FormData();
         formData.append('file', uploadedFileBlob, uploadedFileBlob.fileName);
@@ -85,6 +88,8 @@ export default {
           },
           body: formData,
         });
+        currentFileType.value = uploadedFileBlob.filetype;
+        console.log("CurrentFileType Value:" + JSON.Stringify(currentFileType.value));
 
         if (response.ok) {
           const data = await response.json();
@@ -100,6 +105,7 @@ export default {
           // add the file id to the final file object
           uploadedFileBlob.fileid = data.id;
           currentFile.value = uploadedFileBlob;
+          currentFileType.value = uploadedFileBlob.filetype;
 
         } else {
           const errorData = await response.json();
@@ -118,7 +124,8 @@ export default {
 
     return {
       progress,
-      currentFile
+      currentFile,
+      currentFileType
     };
   },
 };

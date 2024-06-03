@@ -95,6 +95,7 @@
 
 <script>
 import FooterBar from '../components/FooterBar.vue';
+import { getFileType } from '../js/util.js';
 
 export default {
   components: {
@@ -155,19 +156,7 @@ export default {
       }));
       return data;
     },
-    async getFileType(filename) {
-      let cachedData = JSON.parse(localStorage.getItem(`type-${filename}`));
-      if (cachedData && new Date().getTime() < cachedData.expiry) {
-        return cachedData.data;
-      }
-      const response = await fetch(`/api/download/getType/${filename}`);
-      let data = await response.json();
-      localStorage.setItem(`type-${filename}`, JSON.stringify({
-        data: data,
-        expiry: this.cacheExpiry
-      }));
-      return data;
-    },
+    
     async fetchFileData() {
       try {
         if (!this.fileId) {
@@ -176,7 +165,7 @@ export default {
         }
         this.file = await this.getFileById(this.fileId);
         this.signedUrl = await this.getS3URL(this.fileId);
-        this.fileType = await this.getFileType(this.file.filename);
+        this.fileType = await getFileType(this.file.filename);
         this.isLoading = false;
       } catch (error) {
         this.errorMessage = error.message;
