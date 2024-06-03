@@ -2,7 +2,7 @@
   <progress v-if="shouldUpload && progress > 0" :value="progress" max="100"></progress>
   <div v-else class="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-lg w-full">
     <div class="flex items-center space-x-4">
-      <input class="form-checkbox h-5 w-5 text-purple-500" type="checkbox">
+      <input class="file-checkbox h-5 w-5 text-purple-500" type="checkbox">
       <span :class="`text-xl fiv-viv fiv-icon-${currentFileType.extension}`"></span>
       <a :href="`/download/${currentFile.fileid}`" class="text-white">{{ currentFile.filename }}</a>
     </div>
@@ -56,13 +56,16 @@ export default {
   setup(props, { emit }) {
     const progress = ref(0);
     const currentFile = ref(props.file);
-    const currentFileType = ref(null);
+    const currentFileType = ref(props.file.filename);
+    const friendlyDate = ref(null);
 
     onMounted(async () => {
+      
       try {
         if (!props.shouldUpload) {
           console.log("Getting filetype for " + currentFile.value.filename);
           currentFileType.value = await getFileType(currentFile.value.filename);
+          friendlyDate.value = new Date(currentFile.value.uploaddate).toLocaleString();
           return;
         }
 
@@ -102,10 +105,15 @@ export default {
           });
           // we no longer have a raw file object because we are done processing
           uploadedFileBlob.rawFile = null;
-          // add the file id to the final file object
+
+          // add the uploaded file data to the final file object
           uploadedFileBlob.fileid = data.id;
+          uploadedFileBlob.uploaddate = data.uploaddate;
+
           currentFile.value = uploadedFileBlob;
+          // set the type and date
           currentFileType.value = uploadedFileBlob.filetype;
+          friendlyDate.value = new Date(currentFile.value.uploaddate).toLocaleString();
 
         } else {
           const errorData = await response.json();

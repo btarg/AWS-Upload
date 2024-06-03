@@ -21,6 +21,9 @@ export function getJSONPayloadFromCookie(prefix) {
     }
 }
 export function getExt(fileName) {
+    if (!fileName) {
+        return "unknown";
+    }
     return fileName.slice((Math.max(0, fileName.lastIndexOf(".")) || Infinity) + 1);
 }
 

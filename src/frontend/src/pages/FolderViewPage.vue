@@ -3,8 +3,8 @@
         <button v-if="currentFolderData" @click="goUpOneFolder">Up one folder</button>
         <input type="file" @change="onFileUpload" multiple />
         <div class="bg-gray-900 p-4 rounded-lg">
-            <div class="flex justify-between items-center mb-4">
-                <div class="space-y-4 w-full">
+            <div class="flex justify-between items-center">
+                <div class="space-y-2 w-full">
                     <FolderElement v-for="folder in subfolders" :key="folder.id" :folder="folder"
                         :title-click-function="setCurrentFolderAndUpdate" />
                     <NewFileElement v-for="file in files" :file="file" :shouldUpload="file.shouldUpload"
