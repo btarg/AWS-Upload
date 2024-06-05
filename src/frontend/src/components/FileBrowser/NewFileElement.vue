@@ -77,7 +77,7 @@ export default {
         const uploadedFileBlob = await encryptAndAssignHash(currentFile.value.rawFile);
 
         // use headers instead of form data for file metadata to make parsing easier
-        const urlResponse = await fetch('/api/upload/getUrl', {
+        const insertFileAndGetURLResponse = await fetch('/api/upload/getUrl', {
           method: 'GET',
           headers: {
             'filename': uploadedFileBlob.filename,
@@ -89,20 +89,27 @@ export default {
           }
         });
         
-        if (!urlResponse.ok) {
-          console.error("Error getting upload URL: " + urlResponse.statusText);
-          throw new Error("Error getting upload URL: " + urlResponse.statusText);
+        if (!insertFileAndGetURLResponse.ok) {
+          console.error("Error getting upload URL: " + insertFileAndGetURLResponse.statusText);
+          throw new Error("Error getting upload URL: " + insertFileAndGetURLResponse.statusText);
         }
-        const urlData = await urlResponse.json();
-        const url = urlData.signedUrl;
+        const uploadedFileData = await insertFileAndGetURLResponse.json();
+        
+        // stringify and log uploadedFileData
+        const url = uploadedFileData.signedUrl;
+        const fileId = uploadedFileData.fileId;
+        const uploadDate = uploadedFileData.uploadDate;
         console.log("Got signed URL: " + url);
+        console.log("File ID: " + fileId);
+        console.log("Upload Date: " + uploadDate);
 
         // upload the file to the signed URL
         const response = await fetch(url, {
           method: 'PUT',
           body: uploadedFileBlob.file,
           headers: {
-            'Content-Type': uploadedFileBlob.filetype.mime
+            'Content-Type': uploadedFileBlob.filetype.mime,
+            'ContentDisposition': `inline; filename="${uploadedFileBlob.filename}"`
           }
         });
 
@@ -110,25 +117,24 @@ export default {
         console.log("CurrentFileType Value:" + JSON.stringify(currentFileType.value));
 
         if (response.ok) {
-          const data = await response.json();
 
-          const str = JSON.stringify(data, null, 4);
-          console.log("Upload data: " + str);
           emit('upload-complete', {
-            uploadedFile: data,
+            uploadedFile: uploadedFileData,
             file: uploadedFileBlob
           });
           // we no longer have a raw file object because we are done processing
-          uploadedFileBlob.rawFile = null;
+          currentFile.value.rawFile = null;
 
-          // add the uploaded file data to the final file object
-          uploadedFileBlob.fileid = data.id;
-          uploadedFileBlob.uploaddate = data.uploaddate;
-
+          // assign the final file object
           currentFile.value = uploadedFileBlob;
+          
+          // add the uploaded file data to the final file object
+          currentFile.value.fileid = fileId;
+          currentFile.value.uploaddate = uploadDate;
+          
           // set the type and date
           currentFileType.value = uploadedFileBlob.filetype;
-          friendlyDate.value = new Date(currentFile.value.uploaddate).toLocaleString();
+          friendlyDate.value = uploadDate.toLocaleString();
 
         } else {
           const errorData = await response.json();

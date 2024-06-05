@@ -28,6 +28,7 @@ export function getExt(fileName) {
 }
 
 export async function getFileType(fileName) {
+    console.log("Getting file type of " + fileName);
     const ext = getExt(fileName);
     try {
         const fileMime = resolveFileType("." + ext); // get friendly mime data

@@ -89,18 +89,20 @@ router.get('/getUrl', checkAuthenticated, uploadLimiter, async (req, res) => {
     const encryptionData = { encrypted: isEncrypted, iv: fileIV };
     const healthPoints = 72;
 
+    const uploadDate = new Date();
+
     // insert file into database and give back the link to the user
-    insertFile(fileId, userId, fileName, fileHash, fileSize, new Date(), encryptionData, healthPoints, folderId)
+    insertFile(fileId, userId, fileName, fileHash, fileSize, uploadDate, encryptionData, healthPoints, folderId)
         .then(() => {
             const downloadLink = `${hostname}/download/${fileId}`;
             emitFileUploaded(dbUser, fileName, fileSize, encryptionData, downloadLink);
-           return res.status(200).json({ signedUrl: signedUrl });
+            return res.status(200).json({ fileId: fileId, uploadDate: uploadDate, signedUrl: signedUrl });
         })
         .catch(error => {
             console.error('Error inserting file:', error);
             return res.status(500).json({ error: "Error inserting file" });
         });
-  
+
 });
 
 router.get('/error/:fileId', checkAuthenticated, uploadLimiter, async (req, res) => {

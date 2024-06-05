@@ -23,7 +23,7 @@ export function encryptAndAssignHash(file) {
 
                 let encrypted = await aead.encrypt(iv, arrayBuffer);
                 
-                const fileType = await getFileType(file);
+                const fileType = await getFileType(file.name);
                 let encryptedFile = new Blob([encrypted], { type: fileType.mime });
 
                 // apply the calculated hash as well as the size to the file object
