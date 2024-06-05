@@ -7,7 +7,7 @@
                 <div class="space-y-2 w-full">
                     <FolderElement v-for="folder in subfolders" :key="folder.id" :folder="folder"
                         :title-click-function="setCurrentFolderAndUpdate" />
-                    <NewFileElement v-for="file in files" :file="file" :shouldUpload="file.shouldUpload"
+                    <FileElement v-for="file in files" :file="file" :shouldUpload="file.shouldUpload"
                         @delete="onFileDelete" @upload-complete="onFileUpdate" />
                 </div>
             </div>
@@ -16,12 +16,12 @@
 </template>
 
 <script>
-import NewFileElement from '../components/FileBrowser/NewFileElement.vue';
+import FileElement from '../components/FileBrowser/FileElement.vue';
 import FolderElement from '../components/FileBrowser/FolderElement.vue';
 
 export default {
     components: {
-        NewFileElement,
+        FileElement,
         FolderElement,
     },
 
