@@ -106,7 +106,7 @@ export default {
         // upload the file to the signed URL
         const response = await fetch(url, {
           method: 'PUT',
-          body: uploadedFileBlob.file,
+          body: uploadedFileBlob,
           headers: {
             'Content-Type': uploadedFileBlob.filetype.mime,
             'ContentDisposition': `inline; filename="${uploadedFileBlob.filename}"`
