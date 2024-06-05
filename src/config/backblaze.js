@@ -7,11 +7,11 @@ export const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
 export const region = process.env.S3_REGION;
 export const Bucket = process.env.S3_BUCKET_NAME;
 export const b2Client = new S3Client({
-    endpoint: `https://s3.${region}.backblazeb2.com/${Bucket}`,
+    endpoint: `https://s3.${region}.backblazeb2.com`,
     region: region,
     forcePathStyle: true,
     credentials: {
-        accessKeyId,
-        secretAccessKey
+        accessKeyId: accessKeyId,
+        secretAccessKey: secretAccessKey
     },
 })

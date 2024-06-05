@@ -60,7 +60,7 @@ export default {
     const friendlyDate = ref(null);
 
     onMounted(async () => {
-      
+
       try {
         if (!props.shouldUpload) {
           console.log("Getting filetype for " + currentFile.value.filename);
@@ -75,12 +75,10 @@ export default {
         // TODO: add proper progress tracking
         progress.value = 50;
         const uploadedFileBlob = await encryptAndAssignHash(currentFile.value.rawFile);
-        const formData = new FormData();
-        formData.append('file', uploadedFileBlob, uploadedFileBlob.fileName);
 
         // use headers instead of form data for file metadata to make parsing easier
-        const response = await fetch('/api/upload', {
-          method: 'POST',
+        const urlResponse = await fetch('/api/upload/getUrl', {
+          method: 'GET',
           headers: {
             'filename': uploadedFileBlob.filename,
             'filehash': uploadedFileBlob.filehash,
@@ -88,11 +86,28 @@ export default {
             'encrypted': true,
             'iv': uploadedFileBlob.iv || null,
             'mime': uploadedFileBlob.filetype.mime,
-          },
-          body: formData,
+          }
         });
+        
+        if (!urlResponse.ok) {
+          console.error("Error getting upload URL: " + urlResponse.statusText);
+          throw new Error("Error getting upload URL: " + urlResponse.statusText);
+        }
+        const urlData = await urlResponse.json();
+        const url = urlData.signedUrl;
+        console.log("Got signed URL: " + url);
+
+        // upload the file to the signed URL
+        const response = await fetch(url, {
+          method: 'PUT',
+          body: uploadedFileBlob.file,
+          headers: {
+            'Content-Type': uploadedFileBlob.filetype.mime
+          }
+        });
+
         currentFileType.value = uploadedFileBlob.filetype;
-        console.log("CurrentFileType Value:" + JSON.Stringify(currentFileType.value));
+        console.log("CurrentFileType Value:" + JSON.stringify(currentFileType.value));
 
         if (response.ok) {
           const data = await response.json();
@@ -118,14 +133,14 @@ export default {
         } else {
           const errorData = await response.json();
           const str = JSON.stringify(errorData, null, 4);
-          console.error("Error uploading file: " + str);
+          console.error("Response Error while uploading file: " + str);
           emit('upload-error', errorData);
         }
         progress.value = 0;
-        
 
       } catch (error) {
-        console.error("Error uploading file: " + error);
+        const errorMessage = error.error || error.message || JSON.stringify(error, null, 4);
+        console.error("Error caught while uploading file: " + errorMessage);
         emit('upload-error', currentFile.value.rawFile.name);
       }
     });

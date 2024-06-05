@@ -96,11 +96,11 @@ export const parseAndUpload = async (req) => {
                     partSize: partSize,
                     leavePartsOnError: false, // optional manually handle dropped parts
                 }).done()
-                    .then(data => {
+                    .then(async data => {
                         form.emit('data', { name: "complete", value: data });
 
                         // add bytes to user
-                        addBytes(userId, fileSize);
+                        await addBytes(userId, fileSize);
 
                         const encryptionData = { encrypted: isEncrypted, iv: fileIV };
                         const healthPoints = 72;
