@@ -20,8 +20,8 @@
 
 <script>
 import { ref, onMounted } from 'vue';
-import { encryptAndAssignHash } from '../../js/encryption.js';
-import { getFileType } from '../../js/util.js';
+import { encryptAndAssignHash } from '../../../public/js/encryption.js';
+import { getFileType } from '../../../public/js/util.js';
 import prettyBytes from 'pretty-bytes';
 
 export default {

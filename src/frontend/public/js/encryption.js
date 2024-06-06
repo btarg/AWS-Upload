@@ -1,6 +1,8 @@
 import AEAD from './AEAD.js';
 import { getFileType } from './util.js';
 
+const secretKey = "my-secret-key";
+
 export function encryptAndAssignHash(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -8,7 +10,7 @@ export function encryptAndAssignHash(file) {
             try {
                 // first calculate the hash
                 const arrayBuffer = event.target.result;
-                const hashBuffer = await window.crypto.subtle.digest(
+                const hashBuffer = await crypto.subtle.digest(
                     "SHA-1",
                     arrayBuffer
                 );
@@ -17,9 +19,11 @@ export function encryptAndAssignHash(file) {
                     .map((b) => b.toString(16).padStart(2, "0"))
                     .join(""); // convert bytes to hex string
 
+                // TODO: check if the file already exists in the db, if so return it
+            
                 // then encrypt the file, using the array buffer
                 const iv = crypto.getRandomValues(new Uint8Array(AEAD.IV_LENGTH_IN_BYTES));
-                const aead = await AEAD.create("my-secret-key");
+                const aead = await AEAD.create(secretKey);
 
                 let encrypted = await aead.encrypt(iv, arrayBuffer);
                 
@@ -46,4 +50,25 @@ export function encryptAndAssignHash(file) {
         reader.onerror = reject;
         reader.readAsArrayBuffer(file);
     });
+}
+
+export async function decrypt(url, iv) {
+  return new Promise(async (resolve, reject) => {
+    const worker = new Worker('/js/decrypt-worker.js', { type: 'module' });
+
+    worker.onmessage = (event) => {
+      resolve(event.data);
+    };
+
+    worker.onerror = (error) => {
+      console.error(error);
+      reject(error);
+    };
+
+    const response = await fetch(url);
+    const file = await response.blob();
+    console.log("got file " + file);
+
+    worker.postMessage({ file, iv });
+  });
 }

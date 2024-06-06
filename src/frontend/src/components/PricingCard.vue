@@ -50,7 +50,7 @@
 </style>
 
 <script>
-import { formatMoney } from '../js/util.js';
+import { formatMoney } from '../../public/js/util.js';
 import IconButton from './Buttons/IconButton.vue';
 import prettyBytes from 'pretty-bytes';
 import { getMappedFeatures, getDescription } from '../../../config/subscriptions.js';

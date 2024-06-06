@@ -4,7 +4,7 @@
     <div v-else>
       <div v-if="isLoading">Loading...</div>
       <div v-else>
-        <div class="media-container">
+        <div v-if="!file.encryptiondata.encrypted" class="media-container">
           <div class="title-container">
             <h1 class="title text-2xl sm:text-3xl md:text-4xl lg:text-5xl">{{ file.filename }}</h1>
           </div>
@@ -21,9 +21,15 @@
           <div class="ad-banner">
             <p class="text-2xl ml-2">This file was hosted with ByteReserve</p>
           </div>
-          <FooterBar />
         </div>
 
+        <div v-else>
+          This file is encrypted. Please enter the password to decrypt it.
+          <input type="password" v-model="password" placeholder="Password" @keyup.enter="decryptFile">
+          <button @click="decryptFile">Decrypt</button>
+        </div>
+
+        <FooterBar />
       </div>
     </div>
   </div>
@@ -95,7 +101,8 @@
 
 <script>
 import FooterBar from '../components/FooterBar.vue';
-import { getFileType } from '../js/util.js';
+import { decrypt } from '../../public/js/encryption';
+import { getFileType } from '../../public/js/util.js';
 
 export default {
   components: {
@@ -156,7 +163,7 @@ export default {
       }));
       return data;
     },
-    
+
     async fetchFileData() {
       try {
         if (!this.fileId) {
@@ -171,6 +178,16 @@ export default {
         this.errorMessage = error.message;
       }
     },
+    async decryptFile() {
+      console.log("IV " + typeof(this.file.encryptiondata.iv) + " " + this.file.encryptiondata.iv);
+
+
+      const decryptedChunks = await decrypt(this.signedUrl, this.file.encryptiondata.iv);
+      const decryptedFile = new Blob(decryptedChunks, { type: this.fileType.mime });
+      const url = URL.createObjectURL(decryptedFile);
+      console.log("Decrypted: " + url);
+    }
+
   },
   async mounted() {
     await this.fetchFileData();

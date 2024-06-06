@@ -49,7 +49,7 @@ export default {
           const reader = new FileReader();
           reader.onload = async (event) => {
             const arrayBuffer = event.target.result;
-            const hashBuffer = await window.crypto.subtle.digest(
+            const hashBuffer = await crypto.subtle.digest(
               "SHA-1",
               arrayBuffer
             );
