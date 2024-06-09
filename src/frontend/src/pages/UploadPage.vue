@@ -19,7 +19,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useAuthStore } from "../stores/authStore.js";
-import Uploader from "../components/Uploader.vue";
 import FolderViewPage from "./FolderViewPage.vue";
 import prettyBytes from 'pretty-bytes';
 
@@ -60,7 +59,6 @@ async function updateUserData(useCooldown = true) {
 export default {
   name: "UploadPage",
   components: {
-    Uploader,
     FolderViewPage,
   }
 };

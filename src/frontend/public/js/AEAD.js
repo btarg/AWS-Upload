@@ -1,10 +1,8 @@
 export default class AEAD {
 
-    static KEY_LENGTH_IN_BYTES = 16;
-    static IV_LENGTH_IN_BYTES = 16;
-    static TAG_LENGTH_IN_BYTES = 16;
-
-    static ALGORITHM = 'AES-GCM';
+    static KEY_LENGTH_IN_BYTES = 32;
+    static IV_LENGTH_IN_BYTES = 12;
+    static TAG_LENGTH_IN_BYTES = 128;
 
     static secretKey;
     static tagLengthInBytes;
@@ -28,7 +26,8 @@ export default class AEAD {
         const encoder = new TextEncoder();
         const data = encoder.encode(rawKey);
         const hash = await crypto.subtle.digest('SHA-256', data);
-        return this.bufferToHex(hash);
+        console.log("Hashed key as string: " + this.bufferToHex(hash));
+        return hash;
     }
 
     hexToBuffer(hex) {
@@ -42,11 +41,15 @@ export default class AEAD {
     async getCryptoKeyFromRawKey(rawKey) {
         if (typeof (rawKey) != CryptoKey) {
             const hashedKey = await this.getHashedKey(rawKey);
-            const buffer = this.hexToBuffer(hashedKey);
+            // Check if the key length is correct
+            if (hashedKey.byteLength !== AEAD.KEY_LENGTH_IN_BYTES) {
+                throw new Error(`Key length is incorrect. Expected ${AEAD.KEY_LENGTH_IN_BYTES} but got ${hashedKey.byteLength}`);
+            }
+
             return crypto.subtle.importKey(
                 'raw',
-                buffer,
-                { name: AEAD.ALGORITHM, },
+                hashedKey,
+                { name: "AES-GCM", },
                 true,
                 ['encrypt', 'decrypt'],
             );
@@ -54,44 +57,51 @@ export default class AEAD {
             // already converted
             return rawKey;
         }
-
     }
 
     async encrypt(iv, data) {
-        let encoder = new TextEncoder();
-        let encodedIV = encoder.encode(iv);
-        const key = await this.getCryptoKeyFromRawKey(this.secretKey);
+        console.log("encrypting with IV: " + iv);
         return await crypto.subtle.encrypt(
             {
-                name: AEAD.ALGORITHM,
-                iv: encodedIV,
-                tagLength: this.tagLengthInBytes * 8,
+                name: "AES-GCM",
+                iv: iv,
+                tagLength: this.tagLengthInBytes,
             },
-            key,
+            this.secretKey,
             data
         );
     }
 
     async decrypt(iv, data) {
+        console.log("Type of encrypted file data: " + typeof data);
+        if (!data) {
+            console.error("No data");
+            return;
+        }
+
+        // Check if data is not an instance of ArrayBuffer
+        if (!(data instanceof ArrayBuffer)) {
+            console.error("Data is not an ArrayBuffer");
+            // Create a new ArrayBuffer and copy data over
+            let buffer = new ArrayBuffer(data.byteLength);
+            new Uint8Array(buffer).set(new Uint8Array(data));
+            data = buffer;
+        }
+        const ivUint8Array = new Uint8Array(iv, 0, AEAD.IV_LENGTH_IN_BYTES);
+        console.log("IV array: " + ivUint8Array);
         try {
-            const key = await this.getCryptoKeyFromRawKey(this.secretKey);
-            const ivArray = iv.split(',').map(Number); // convert string to array of numbers
-            console.log("key: " + key);
-            const ivUint8Array = new Uint8Array(ivArray, 0, AEAD.IV_LENGTH_IN_BYTES); // convert array of numbers to Uint8Array of length 16
-            console.log("iv array: " + ivUint8Array);
             return await crypto.subtle.decrypt(
                 {
-                    name: AEAD.ALGORITHM,
+                    name: "AES-GCM",
                     iv: ivUint8Array,
-                    tagLength: this.tagLengthInBytes * 8,
+                    tagLength: this.tagLengthInBytes,
                 },
-                key,
+                this.secretKey,
                 data
             );
         } catch (error) {
-            console.error('Error name:', error.name);
-            console.error('Error message:', error.message);
-            throw error; // re-throw the error so it can be handled by the caller
+            console.error("Decryption failed: " + error);
+            throw error;
         }
     }
 }

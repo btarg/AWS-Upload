@@ -1,36 +1,47 @@
 import AEAD from './AEAD.js';
 import { getFileType } from './util.js';
 
-const secretKey = "my-secret-key";
-
 export function encryptAndAssignHash(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
-                // first calculate the hash
                 const arrayBuffer = event.target.result;
                 const hashBuffer = await crypto.subtle.digest(
                     "SHA-1",
                     arrayBuffer
                 );
-                const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
                 const fileHash = hashArray
                     .map((b) => b.toString(16).padStart(2, "0"))
-                    .join(""); // convert bytes to hex string
+                    .join("");
 
-                // TODO: check if the file already exists in the db, if so return it
-            
-                // then encrypt the file, using the array buffer
-                const iv = crypto.getRandomValues(new Uint8Array(AEAD.IV_LENGTH_IN_BYTES));
-                const aead = await AEAD.create(secretKey);
+                const aeadInstance = await AEAD.create("my-secret-key");
 
-                let encrypted = await aead.encrypt(iv, arrayBuffer);
-                
+                // Slice the file into chunks and encrypt each chunk
+                const CHUNK_SIZE = 1024 * 1024; // 1MB
+                let encryptedChunks = [];
+                for (let i = 0; i < arrayBuffer.byteLength; i += CHUNK_SIZE) {
+                    const chunk = arrayBuffer.slice(i, i + CHUNK_SIZE);
+
+                    const iv = crypto.getRandomValues(new Uint8Array(AEAD.IV_LENGTH_IN_BYTES));
+                    const encryptedChunk = await aeadInstance.encrypt(iv, chunk);
+
+                    // Prepend the IV to the encrypted chunk
+                    let ivBytes = new Uint8Array(iv);
+                    let encryptedChunkBytes = new Uint8Array(encryptedChunk);
+
+                    let ivAndEncryptedChunk = new Uint8Array(ivBytes.length + encryptedChunkBytes.length);
+                    ivAndEncryptedChunk.set(ivBytes, 0);
+                    ivAndEncryptedChunk.set(encryptedChunkBytes, ivBytes.length);
+
+                    console.log(`Chunk ${i} has IV of ${ivBytes}`);
+                    encryptedChunks.push(ivAndEncryptedChunk);
+                }
+
                 const fileType = await getFileType(file.name);
-                let encryptedFile = new Blob([encrypted], { type: fileType.mime });
+                let encryptedFile = new Blob(encryptedChunks, { type: fileType.mime });
 
-                // apply the calculated hash as well as the size to the file object
                 console.log(`Hash of file ${file.name}: ${fileHash}`);
                 encryptedFile.filehash = fileHash;
                 if (!isNaN(file.size)) {
@@ -41,7 +52,6 @@ export function encryptAndAssignHash(file) {
                 }
                 encryptedFile.filename = file.name;
                 encryptedFile.filetype = fileType;
-                encryptedFile.iv = iv;
                 resolve(encryptedFile);
             } catch (error) {
                 console.error(error);
@@ -50,25 +60,4 @@ export function encryptAndAssignHash(file) {
         reader.onerror = reject;
         reader.readAsArrayBuffer(file);
     });
-}
-
-export async function decrypt(url, iv) {
-  return new Promise(async (resolve, reject) => {
-    const worker = new Worker('/js/decrypt-worker.js', { type: 'module' });
-
-    worker.onmessage = (event) => {
-      resolve(event.data);
-    };
-
-    worker.onerror = (error) => {
-      console.error(error);
-      reject(error);
-    };
-
-    const response = await fetch(url);
-    const file = await response.blob();
-    console.log("got file " + file);
-
-    worker.postMessage({ file, iv });
-  });
 }

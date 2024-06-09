@@ -101,7 +101,7 @@
 
 <script>
 import FooterBar from '../components/FooterBar.vue';
-import { decrypt } from '../../public/js/encryption';
+import { handleDownload } from '../../public/js/decrypt-worker.js';
 import { getFileType } from '../../public/js/util.js';
 
 export default {
@@ -179,13 +179,8 @@ export default {
       }
     },
     async decryptFile() {
-      console.log("IV " + typeof(this.file.encryptiondata.iv) + " " + this.file.encryptiondata.iv);
-
-
-      const decryptedChunks = await decrypt(this.signedUrl, this.file.encryptiondata.iv);
-      const decryptedFile = new Blob(decryptedChunks, { type: this.fileType.mime });
-      const url = URL.createObjectURL(decryptedFile);
-      console.log("Decrypted: " + url);
+      const fetchUrl = await this.getS3URL(this.fileId);
+      await handleDownload(fetchUrl, this.file.encryptiondata.iv);
     }
 
   },
