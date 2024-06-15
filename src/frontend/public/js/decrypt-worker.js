@@ -1,6 +1,6 @@
 import AEAD from "./AEAD.js";
 
-export async function handleDownload(url, ivString) {
+export async function handleDownload(url, ivString, keyString) {
   const response = await fetch(url);
   const encryptedData = await response.arrayBuffer();
   console.log("Got array buffer: " + encryptedData);
@@ -10,7 +10,7 @@ export async function handleDownload(url, ivString) {
   const iv = new Uint8Array(ivArray);
 
   // Decrypt the data
-  const aeadInstance = await AEAD.create("my-secret-key");
+  const aeadInstance = await AEAD.create(keyString);
   const decryptedArrayBuffer = await aeadInstance.decrypt(iv, encryptedData);
 
   // Create a Blob from the decrypted ArrayBuffer

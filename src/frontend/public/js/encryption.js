@@ -1,12 +1,12 @@
 import AEAD from './AEAD.js';
 import { getFileType } from './util.js';
 
-export async function encryptAndAssignHash(file, chunkSize = 1024 * 1024) { // default chunk size is 1MB
+export async function encryptAndAssignHash(file, keyString, chunkSize = 1024 * 1024) { // default chunk size is 1MB
     let currentChunk = 0;
     const totalChunks = Math.ceil(file.size / chunkSize);
     const chunks = [];
 
-    const aeadInstance = await AEAD.create("my-secret-key");
+    const aeadInstance = await AEAD.create(keyString);
     // Generate 16 byte IV
     const iv = crypto.getRandomValues(new Uint8Array(AEAD.IV_LENGTH_IN_BYTES));
     const ivBytes = new Uint8Array(iv);

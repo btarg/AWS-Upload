@@ -72,9 +72,9 @@ export default {
         if (!currentFile.value.rawFile) {
           throw new Error("No raw file for upload found!");
         }
-        // TODO: add proper progress tracking
+        // TODO: add proper progress tracking and allow for key to be set
         progress.value = 50;
-        const uploadedFileBlob = await encryptAndAssignHash(currentFile.value.rawFile);
+        const uploadedFileBlob = await encryptAndAssignHash(currentFile.value.rawFile, "my-secret-key");
         console.log("Encrypted file size: " + uploadedFileBlob.size);
 
         // use headers instead of form data for file metadata to make parsing easier

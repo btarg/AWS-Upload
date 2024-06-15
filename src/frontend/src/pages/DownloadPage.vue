@@ -180,7 +180,7 @@ export default {
     },
     async decryptFile() {
       const fetchUrl = await this.getS3URL(this.fileId);
-      await handleDownload(fetchUrl, this.file.encryptiondata.iv);
+      await handleDownload(fetchUrl, this.file.encryptiondata.iv, this.password || "my-secret-key");
     }
 
   },
