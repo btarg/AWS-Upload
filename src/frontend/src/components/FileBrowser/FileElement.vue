@@ -75,6 +75,7 @@ export default {
         // TODO: add proper progress tracking
         progress.value = 50;
         const uploadedFileBlob = await encryptAndAssignHash(currentFile.value.rawFile);
+        console.log("Encrypted file size: " + uploadedFileBlob.size);
 
         // use headers instead of form data for file metadata to make parsing easier
         const insertFileAndGetURLResponse = await fetch('/api/upload/getUrl', {
@@ -82,29 +83,30 @@ export default {
           headers: {
             'filename': uploadedFileBlob.filename,
             'filehash': uploadedFileBlob.filehash,
-            'filesize': uploadedFileBlob.filesize,
+            'filesize': uploadedFileBlob.size,
             'encrypted': true,
             'iv': uploadedFileBlob.iv || null,
             'mime': uploadedFileBlob.filetype.mime,
           }
         });
-        
+
+
+        const insertedFileResponse = await insertFileAndGetURLResponse.json();
         if (!insertFileAndGetURLResponse.ok) {
-          console.error("Error getting upload URL: " + insertFileAndGetURLResponse.statusText);
-          throw new Error("Error getting upload URL: " + insertFileAndGetURLResponse.statusText);
+          console.error("Error getting upload URL: " + JSON.stringify(insertedFileResponse.error));
+          throw new Error("Error getting upload URL: " + JSON.stringify(insertedFileResponse.error));
         }
-        const uploadedFileData = await insertFileAndGetURLResponse.json();
-        
+
         // stringify and log uploadedFileData
-        const url = uploadedFileData.signedUrl;
-        const fileId = uploadedFileData.fileId;
-        const uploadDate = uploadedFileData.uploadDate;
+        const url = insertedFileResponse.signedUrl;
+        const fileId = insertedFileResponse.fileId;
+        const uploadDate = insertedFileResponse.uploadDate;
         console.log("Got signed URL: " + url);
         console.log("File ID: " + fileId);
         console.log("Upload Date: " + uploadDate);
 
         // upload the file to the signed URL
-        const response = await fetch(url, {
+        const uploadResponse = await fetch(url, {
           method: 'PUT',
           body: uploadedFileBlob,
           headers: {
@@ -116,10 +118,10 @@ export default {
         currentFileType.value = uploadedFileBlob.filetype;
         console.log("CurrentFileType Value:" + JSON.stringify(currentFileType.value));
 
-        if (response.ok) {
+        if (uploadResponse.ok) {
 
           emit('upload-complete', {
-            uploadedFile: uploadedFileData,
+            uploadedFile: insertedFileResponse,
             file: uploadedFileBlob
           });
           // we no longer have a raw file object because we are done processing
@@ -127,17 +129,18 @@ export default {
 
           // assign the final file object
           currentFile.value = uploadedFileBlob;
-          
+
           // add the uploaded file data to the final file object
           currentFile.value.fileid = fileId;
           currentFile.value.uploaddate = uploadDate;
-          
+
           // set the type and date
           currentFileType.value = uploadedFileBlob.filetype;
           friendlyDate.value = uploadDate.toLocaleString();
 
         } else {
-          const errorData = await response.json();
+          console.log("Upload response not ok: " + uploadResponse.statusText);
+          const errorData = await uploadResponse.json();
           const str = JSON.stringify(errorData, null, 4);
           console.error("Response Error while uploading file: " + str);
           emit('upload-error', errorData);
@@ -150,8 +153,8 @@ export default {
         emit('upload-error', currentFile.value.rawFile.name);
 
         // If there is a file id, send a request to the /upload/error/:fileid endpoint
-        if (fileId) {
-          const errorResponse = await fetch(`/upload/error/${fileId}`, {
+        if (currentFile.value.fileid) {
+          const errorResponse = await fetch(`/upload/error/${currentFile.value.fileid}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'

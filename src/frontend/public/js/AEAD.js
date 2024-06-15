@@ -1,20 +1,18 @@
 export default class AEAD {
 
     static KEY_LENGTH_IN_BYTES = 32;
-    static IV_LENGTH_IN_BYTES = 12;
-    static TAG_LENGTH_IN_BYTES = 128;
+    static IV_LENGTH_IN_BYTES = 16;
 
     static secretKey;
-    static tagLengthInBytes;
 
-    constructor(secretKey, tagLengthInBytes = AEAD.TAG_LENGTH_IN_BYTES) {
+    constructor(secretKey) {
         this.secretKey = secretKey;
-        this.tagLengthInBytes = tagLengthInBytes;
     }
 
-    static async create(secretKey, tagLengthInBytes = AEAD.TAG_LENGTH_IN_BYTES) {
-        const instance = new AEAD(secretKey, tagLengthInBytes);
+    static async create(secretKey) {
+        const instance = new AEAD(secretKey);
         instance.secretKey = await instance.getCryptoKeyFromRawKey(secretKey);
+        console.log("Created AEAD Instance with key " + secretKey);
         return instance;
     }
 
@@ -49,7 +47,7 @@ export default class AEAD {
             return crypto.subtle.importKey(
                 'raw',
                 hashedKey,
-                { name: "AES-GCM", },
+                { name: "AES-CBC", },
                 true,
                 ['encrypt', 'decrypt'],
             );
@@ -63,9 +61,8 @@ export default class AEAD {
         console.log("encrypting with IV: " + iv);
         return await crypto.subtle.encrypt(
             {
-                name: "AES-GCM",
+                name: "AES-CBC",
                 iv: iv,
-                tagLength: this.tagLengthInBytes,
             },
             this.secretKey,
             data
@@ -92,9 +89,8 @@ export default class AEAD {
         try {
             return await crypto.subtle.decrypt(
                 {
-                    name: "AES-GCM",
+                    name: "AES-CBC",
                     iv: ivUint8Array,
-                    tagLength: this.tagLengthInBytes,
                 },
                 this.secretKey,
                 data

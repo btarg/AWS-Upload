@@ -30,7 +30,7 @@ export const subscriptionFeatures = {
     "FREE_5GB": "5GB of storage, free forever",
     "FREE_10GB": "10GB of storage, free forever",
     "FREE_15GB": "15GB of storage, free forever",
-    "AES_GCM": "AES-GCM File Encryption",
+    "AES_CBC": "AES-CBC File Encryption",
     "SHAREX": "Use ShareX to upload files",
     "CONTROL_EXPIRY": "Create temporary links",
     "IMPORT": "Import files from other services",
@@ -63,7 +63,7 @@ export const subscriptionPlans = {
         totalUploadCap: totalUploadCaps.PLUS,
         features: [
             "FREE_10GB",
-            "AES_GCM",
+            "AES_CBC",
             "SHAREX",
             "CONTROL_EXPIRY",
             "DISCOUNT_5"
@@ -77,7 +77,7 @@ export const subscriptionPlans = {
         totalUploadCap: totalUploadCaps.OVERKILL,
         features: [
             "FREE_15GB",
-            "AES_GCM",
+            "AES_CBC",
             "SHAREX",
             "CONTROL_EXPIRY",
             "DISCOUNT_10"

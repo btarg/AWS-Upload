@@ -10,7 +10,7 @@
             </InfoBoxWithButton>
 
             <InfoBoxWithButton href="https://google.com" iconClass="fas fa-lock" buttonText="Encryption Info">
-                All files are stored encrypted at rest. With Plus, you can also encrypt your files with AES-GCM when
+                All files are stored encrypted at rest. With Plus, you can also encrypt your files with AES-256 when
                 uploading, done entirely client-side.
             </InfoBoxWithButton>
 

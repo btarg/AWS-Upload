@@ -37,8 +37,8 @@ const uploadLimiter = async (req, res, next) => {
             message: "Too many upload attempts from this IP, please try again after 15 minutes."
         })(req, res, next);
     } catch (error) {
-        console.error("Upload error: " + error.error);
-        return res.status(500).send(req.body);
+        console.error("Upload limiter error: " + error.error);
+        return res.status(500).json({ error: error });
     }
 };
 
@@ -69,7 +69,6 @@ router.get('/getUrl', checkAuthenticated, uploadLimiter, async (req, res) => {
         fileIV = req.headers['iv'];
     }
 
-    const hostname = getFullHostname(req.hostname);
     const folderString = req.headers['folder'];
 
     let folderId;
@@ -77,46 +76,53 @@ router.get('/getUrl', checkAuthenticated, uploadLimiter, async (req, res) => {
         folderId = await getOrCreateFolders(folderString, dbUser.id);
         console.log("Folder ID: " + folderId);
     } catch (error) {
+        console.error('Error getting or creating folders: ' + error);
         return res.status(500).json({ error: 'Error getting or creating folders: ' + error });
     }
-
-    // add bytes to user
-    await addBytes(userId, fileSize);
 
     const encryptionData = { encrypted: isEncrypted, iv: fileIV };
     const healthPoints = 72;
 
     const uploadDate = new Date();
+    const hostname = getFullHostname(req.hostname);
 
     // insert file into database and give back the link to the user
     insertFile(fileId, userId, fileName, fileHash, fileSize, uploadDate, encryptionData, healthPoints, folderId)
-        .then(() => {
+        .then(async () => {
+            // add bytes to user
+            await addBytes(userId, fileSize);
+            // get download link and emit
             const downloadLink = `${hostname}/download/${fileId}`;
             emitFileUploaded(dbUser, fileName, fileSize, encryptionData, downloadLink);
             return res.status(200).json({ fileId: fileId, uploadDate: uploadDate, signedUrl: signedUrl });
         })
         .catch(error => {
-            console.error('Error inserting file:', error);
+            console.log('Error inserting file: ' + error);
             // delete the file from the database when there is an error
-            onError(fileId, res);
+            onError(fileId, req, res);
         });
 
 });
 
-async function onError(fileId, res) {
+async function onError(fileId, req, res) {
+
+    console.log("Error uploading file to S3, deleting file from database " + fileId);
+
+    const currentUser = await fetchUserData(req);
+
+    if (!currentUser || !currentUser.id) {
+        return res.status(404).json({ error: "DB User not found for error cleanup" });
+    }
+    const userId = currentUser.id;
+
+    const file = await getFileById(fileId);
+    if (!file) {
+        return res.status(404).json({ error: "Upload error: requested file for deletion not found in database" });
+    }
+    if (file.userId !== userId) {
+        return res.status(403).json({ error: "You do not have permission to delete this file" });
+    }
     try {
-        console.log("Error uploading file to S3, deleting file from database " + fileId);
-
-        const currentUser = await fetchUserData(req);
-        const userId = currentUser.id;
-        if (!userId) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        const file = await getFileById(fileId);
-        if (file.userId !== userId) {
-            return res.status(403).json({ error: "You do not have permission to access this file" });
-        }
         // delete the file in the database on error
         await deleteFile(fileId);
         await removeBytes(userId);
@@ -124,13 +130,13 @@ async function onError(fileId, res) {
 
     } catch (error) {
         console.error("Error deleting file from database: " + error);
-        return res.status(500).json({ error: error });
+        return res.status(500).json({ error: "Error deleting file from database: " + error });
     }
 }
 
 router.get('/error/:fileId', checkAuthenticated, uploadLimiter, async (req, res) => {
     const fileId = req.params.fileId;
-    return await onError(fileId, res);
+    return await onError(fileId, req, res);
 });
 
 export default router;
