@@ -8,8 +8,8 @@ export async function encryptAndAssignHash(file, keyString, chunkSize = 1024 * 1
 
     const aeadInstance = await AEAD.create(keyString);
     // Generate 16 byte IV
-    const iv = crypto.getRandomValues(new Uint8Array(AEAD.IV_LENGTH_IN_BYTES));
-    const ivBytes = new Uint8Array(iv);
+    let iv = crypto.getRandomValues(new Uint8Array(AEAD.IV_LENGTH_IN_BYTES));
+    const initialIV = new Uint8Array(iv);
 
     for (currentChunk = 0; currentChunk < totalChunks; currentChunk++) {
         const blob = file.slice(currentChunk * chunkSize, (currentChunk + 1) * chunkSize);
@@ -18,17 +18,15 @@ export async function encryptAndAssignHash(file, keyString, chunkSize = 1024 * 1
         console.log("Encrypting chunk", currentChunk + 1, "of", totalChunks);
 
         // Encrypt the chunk
-        const encryptedArrayBuffer = await aeadInstance.encrypt(ivBytes, arrayBuffer);
+        const encryptedArrayBuffer = await aeadInstance.encrypt(iv, arrayBuffer);
         const encryptedBytes = new Uint8Array(encryptedArrayBuffer);
         console.log("Encrypted " + encryptedBytes.length + " bytes");
 
-        // Create a new Uint8Array to hold the encrypted data
-        const encryptedBytesArray = new Uint8Array(encryptedBytes.length);
+        // Update the IV to the last block of the encrypted chunk
+        iv = encryptedBytes.slice(-16);
 
         // Copy the encrypted data into the new array
-        encryptedBytesArray.set(encryptedBytes);
-
-        chunks.push(encryptedBytesArray);
+        chunks.push(encryptedBytes);
     }
 
     // All chunks have been read and encrypted
@@ -47,6 +45,6 @@ export async function encryptAndAssignHash(file, keyString, chunkSize = 1024 * 1
     encryptedFile.filehash = fileHash;
     encryptedFile.filename = file.name;
     encryptedFile.filetype = fileType;
-    encryptedFile.iv = ivBytes;
+    encryptedFile.iv = initialIV;
     return encryptedFile;
 }
